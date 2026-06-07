@@ -1,9 +1,9 @@
-import NextAuth from "next-auth"
+import NextAuth, { type NextAuthConfig } from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+const config: NextAuthConfig = {
   providers: [
     Credentials({
       credentials: {
@@ -54,4 +54,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   pages: { signIn: "/login" },
-})
+}
+
+export const { handlers, auth, signIn, signOut } = NextAuth(config)
