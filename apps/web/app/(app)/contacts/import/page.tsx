@@ -146,7 +146,7 @@ export default function ImportPage() {
         result.push(current.trim())
         return result
       }
-      const cols = parseCSVLine(lines[0])
+      const cols = parseCSVLine(lines[0] ?? "")
       const rows = lines.slice(1).map(line => {
         const vals = parseCSVLine(line)
         const row: ParsedRow = {}
@@ -159,10 +159,12 @@ export default function ImportPage() {
       const XLSX = await import("xlsx")
       const buffer = await f.arrayBuffer()
       const workbook = XLSX.read(buffer, { type: "array" })
-      const sheet = workbook.Sheets[workbook.SheetNames[0]]
+      const sheetName = workbook.SheetNames[0] ?? ""
+      const sheet = workbook.Sheets[sheetName]
+      if (!sheet) return
       const data = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as string[][]
       if (!data.length) return
-      const cols = data[0].map(c => String(c || ""))
+      const cols = (data[0] ?? []).map(c => String(c || ""))
       const rows = data.slice(1).map(row => {
         const r: ParsedRow = {}
         cols.forEach((col, i) => { r[col] = String(row[i] || "") })
@@ -185,7 +187,7 @@ export default function ImportPage() {
       let firstName = row[mapping.firstName] || ""
       let lastName = row[mapping.lastName] || ""
       if (!firstName && !lastName && mapping.fullName && row[mapping.fullName]) {
-        const s = splitFullName(row[mapping.fullName])
+        const s = splitFullName(row[mapping.fullName] ?? "")
         firstName = s.first; lastName = s.last
       }
       return {

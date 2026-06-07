@@ -283,7 +283,7 @@ export default function BrandSettingsPage() {
                     margin: "0 auto 12px",
                     boxShadow: `0 4px 14px ${brandColour}55`
                   }}>
-                    {brandName ? brandName[0].toUpperCase() : "✦"}
+                    {brandName ? (brandName[0] ?? "").toUpperCase() : "✦"}
                   </div>
                 )}
                 <div style={{ fontSize: "15px", fontWeight: 700, color: "#130E08", marginBottom: "4px" }}>

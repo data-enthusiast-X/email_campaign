@@ -575,7 +575,7 @@ export default function ContactsPage() {
               const v = verifBadge(contact.verificationStatus)
               const s = subBadge(contact.subscriptionStatus)
               const e = engLabel(contact.engagementScore)
-              const initial = (contact.firstName?.[0] || contact.email[0]).toUpperCase()
+              const initial = (contact.firstName?.[0] ?? contact.email?.[0] ?? "?").toUpperCase()
               const isDeleting = deletingIds.includes(contact.id)
               return (
                 <div key={contact.id} style={{
