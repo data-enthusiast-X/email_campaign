@@ -1,0 +1,46 @@
+import { NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
+import { getServerSession } from "next-auth"
+
+export async function GET(request: Request) {
+  try {
+    const session = await getServerSession()
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    })
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const filter = searchParams.get("filter") || "all"
+    const segment = searchParams.get("segment") || "all"
+
+    const where: any = { workspaceId: user.workspaceId }
+
+    if (filter === "subscribed") where.subscriptionStatus = "subscribed"
+    if (filter === "verified") where.verificationStatus = "verified"
+    if (filter === "invalid") where.verificationStatus = "invalid"
+
+    if (segment === "champions") where.engagementScore = { gte: 80 }
+    if (segment === "active") where.engagementScore = { gte: 50, lt: 80 }
+    if (segment === "at_risk") where.engagementScore = { gte: 20, lt: 50 }
+    if (segment === "cold") where.engagementScore = { lt: 20 }
+
+    const contacts = await prisma.contact.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: 100
+    })
+
+    return NextResponse.json({ contacts })
+  } catch (error) {
+    console.error("Contacts API error:", error)
+    return NextResponse.json({ error: "Failed to fetch contacts" }, { status: 500 })
+  }
+}
