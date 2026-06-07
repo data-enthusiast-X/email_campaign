@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Workspace {
+  id                String          @id @default(cuid())
+  name              String
+  plan              String          @default("free")
+  emailsSentMonth   Int             @default(0)
+  emailsLimit       Int             @default(5000)
+  verifUsedMonth    Int             @default(0)
+  verifLimit        Int             @default(500)
+  createdAt         DateTime        @default(now())
+  users             User[]
+  contacts          Contact[]
+  campaigns         Campaign[]
+  sendingDomains    SendingDomain[]
+}
+
+model User {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  email         String    @unique
+  name          String?
+  passwordHash  String?
+  role          String    @default("admin")
+  createdAt     DateTime  @default(now())
+  workspace     Workspace @relation(fields: [workspaceId], references: [id])
+}
+
+model Contact {
+  id                    String    @id @default(cuid())
+  workspaceId           String
+  email                 String
+  firstName             String?
+  lastName              String?
+  phone                 String?
+  company               String?
+  jobTitle              String?
+  subscriptionStatus    String    @default("subscribed")
+  verificationStatus    String    @default("unverified")
+  verificationCheckedAt DateTime?
+  engagementScore       Int       @default(0)
+  lifecycleStage        String    @default("lead")
+  source                String?
+  createdAt             DateTime  @default(now())
+  workspace             Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@unique([workspaceId, email])
+  @@index([workspaceId, verificationStatus])
+  @@index([workspaceId, subscriptionStatus])
+}
+
+model Campaign {
+  id             String    @id @default(cuid())
+  workspaceId    String
+  name           String
+  subject        String?
+  previewText    String?
+  fromName       String?
+  fromEmail      String?
+  htmlContent    String?
+  status         String    @default("draft")
+  recipientCount Int       @default(0)
+  scheduledAt    DateTime?
+  sentAt         DateTime?
+  createdAt      DateTime  @default(now())
+  workspace      Workspace @relation(fields: [workspaceId], references: [id])
+}
+
+model SendingDomain {
+  id               String    @id @default(cuid())
+  workspaceId      String
+  domain           String
+  spfVerified      Boolean   @default(false)
+  dkim1Verified    Boolean   @default(false)
+  dkim2Verified    Boolean   @default(false)
+  dmarcVerified    Boolean   @default(false)
+  warmupActive     Boolean   @default(false)
+  warmupDay        Int       @default(0)
+  warmupDailyLimit Int       @default(20)
+  healthScore      Int       @default(0)
+  createdAt        DateTime  @default(now())
+  workspace        Workspace @relation(fields: [workspaceId], references: [id])
+}
