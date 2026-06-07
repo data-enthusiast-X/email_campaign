@@ -41,8 +41,9 @@ export async function POST(request: Request) {
       userId: user.id,
     })
   } catch (error) {
+    console.error("[signup] error:", error)
     return NextResponse.json(
-      { error: "Something went wrong" },
+      { error: "Something went wrong", detail: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     )
   }
