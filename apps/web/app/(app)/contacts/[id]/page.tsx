@@ -192,7 +192,7 @@ export default function ContactDetailPage() {
 
   const v = verifBadge(contact.verificationStatus)
   const s = subBadge(contact.subscriptionStatus)
-  const initial = (contact.firstName?.[0] || contact.email[0]).toUpperCase()
+  const initial = (contact.firstName?.[0] ?? contact.email?.[0] ?? "?").toUpperCase()
   const displayName = [contact.firstName, contact.lastName].filter(Boolean).join(" ") || contact.email.split("@")[0]
   const score = contact.engagementScore
 
