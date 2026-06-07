@@ -3,397 +3,348 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
+import {
+  LayoutDashboard,
+  Users,
+  Mail,
+  Send,
+  Zap,
+  BarChart3,
+  ShieldCheck,
+  PenLine,
+  FileText,
+  Globe,
+  Settings,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  MoreHorizontal,
+  Tag,
+  Trash2,
+} from "lucide-react"
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: "⊞" },
-  { href: "/contacts", label: "Contacts", icon: "⊚" },
-  { href: "/campaigns", label: "Campaigns", icon: "✉" },
-  { href: "/queue", label: "Send queue", icon: "◎" },
-  { href: "/automation", label: "Automation", icon: "⟡" },
-  { href: "/analytics", label: "Analytics", icon: "⟋" },
+  { href: "/dashboard",  label: "Dashboard",  Icon: LayoutDashboard },
+  { href: "/contacts",   label: "Contacts",   Icon: Users },
+  { href: "/campaigns",  label: "Campaigns",  Icon: Mail },
+  { href: "/queue",      label: "Send queue", Icon: Send },
+  { href: "/automation", label: "Automation", Icon: Zap },
+  { href: "/analytics",  label: "Analytics",  Icon: BarChart3 },
 ]
 
 const toolItems = [
-  { href: "/verification", label: "Verification", icon: "✓" },
-  { href: "/signature", label: "Signature", icon: "✏" },
-  { href: "/templates", label: "Templates", icon: "⊟" },
-  { href: "/domain", label: "Domain", icon: "⊕" },
+  { href: "/contacts/tags", label: "Tags",         Icon: Tag },
+  { href: "/verification",  label: "Verification", Icon: ShieldCheck },
+  { href: "/signature",     label: "Signature",    Icon: PenLine },
+  { href: "/templates",     label: "Templates",    Icon: FileText },
+  { href: "/domain",        label: "Domain",       Icon: Globe },
+  { href: "/contacts/bin",  label: "Recycle Bin",  Icon: Trash2 },
 ]
 
 const accountItems = [
-  { href: "/settings", label: "Settings", icon: "⚙" },
+  { href: "/settings", label: "Settings", Icon: Settings },
 ]
 
 export default function Sidebar() {
   const pathname = usePathname()
   const [expanded, setExpanded] = useState(true)
 
-  const isActive = (href: string) => pathname === href
-
-  const NavItem = ({ href, label, icon }: {
-    href: string
-    label: string
-    icon: string
-  }) => {
-    const active = isActive(href)
-    return (
-      <Link href={href} style={{
-        display: "flex",
-        alignItems: "center",
-        gap: expanded ? "10px" : "0px",
-        justifyContent: expanded ? "flex-start" : "center",
-        padding: expanded ? "9px 12px" : "10px",
-        borderRadius: "10px",
-        marginBottom: "2px",
-        textDecoration: "none",
-        fontSize: "13px",
-        fontWeight: active ? 500 : 400,
-        color: active ? "#fff" : "rgba(255,255,255,0.5)",
-        background: active
-          ? "linear-gradient(135deg, #E8561A, #F07040)"
-          : "transparent",
-        transition: "all 0.2s ease",
-        position: "relative",
-        overflow: "hidden",
-        boxShadow: active ? "0 4px 12px rgba(232,86,26,0.35)" : "none",
-      }}
-      onMouseEnter={e => {
-        if (!active) {
-          (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.07)"
-          ;(e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.85)"
-        }
-      }}
-      onMouseLeave={e => {
-        if (!active) {
-          (e.currentTarget as HTMLElement).style.background = "transparent"
-          ;(e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.5)"
-        }
-      }}
-      >
-        {active && (
-          <div style={{
-            position: "absolute",
-            right: "-10px",
-            top: "50%",
-            transform: "translateY(-50%)",
-            width: "4px",
-            height: "20px",
-            background: "#fff",
-            borderRadius: "2px 0 0 2px",
-            opacity: 0.4
-          }} />
-        )}
-        <span style={{
-          fontSize: "16px",
-          width: "20px",
-          textAlign: "center",
-          flexShrink: 0,
-          opacity: active ? 1 : 0.8
-        }}>{icon}</span>
-        {expanded && (
-          <span style={{
-            overflow: "hidden",
-            whiteSpace: "nowrap",
-            transition: "opacity 0.2s"
-          }}>{label}</span>
-        )}
-      </Link>
-    )
-  }
-
-  const SectionLabel = ({ label }: { label: string }) => expanded ? (
-    <div style={{
-      fontSize: "9px",
-      fontWeight: 700,
-      letterSpacing: "2px",
-      textTransform: "uppercase",
-      color: "rgba(255,255,255,0.18)",
-      padding: "14px 12px 5px",
-      userSelect: "none"
-    }}>{label}</div>
-  ) : (
-    <div style={{
-      height: "1px",
-      background: "rgba(255,255,255,0.06)",
-      margin: "10px 8px"
-    }} />
-  )
+  const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/")
 
   return (
     <div style={{
-      width: expanded ? "240px" : "64px",
-      background: "#0F0B06",
+      width: expanded ? "236px" : "62px",
+      background: "#0D0905",
       display: "flex",
       flexDirection: "column",
       flexShrink: 0,
       height: "100vh",
       position: "relative",
       overflow: "hidden",
-      transition: "width 0.25s cubic-bezier(0.4,0,0.2,1)",
-      borderRight: "1px solid rgba(255,255,255,0.06)"
+      transition: "width 0.28s cubic-bezier(0.4,0,0.2,1)",
+      borderRight: "1px solid rgba(255,255,255,0.05)"
     }}>
 
-      {/* Ambient glow */}
+      {/* Ambient glow top */}
       <div style={{
-        position: "absolute",
-        top: "-100px",
-        left: "-60px",
-        width: "280px",
-        height: "280px",
-        borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(232,86,26,0.15) 0%, transparent 65%)",
-        pointerEvents: "none",
-        zIndex: 0
+        position: "absolute", top: "-80px", left: "-40px",
+        width: "240px", height: "240px", borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(232,86,26,0.18) 0%, transparent 65%)",
+        pointerEvents: "none", zIndex: 0
       }} />
 
-      {/* Bottom ambient glow */}
+      {/* ── Brand header ── */}
       <div style={{
-        position: "absolute",
-        bottom: "-80px",
-        right: "-80px",
-        width: "200px",
-        height: "200px",
-        borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(232,86,26,0.06) 0%, transparent 70%)",
-        pointerEvents: "none",
-        zIndex: 0
-      }} />
-
-      {/* Brand header */}
-      <div style={{
-        padding: expanded ? "20px 16px 16px" : "18px 12px 16px",
-        display: "flex",
-        alignItems: "center",
+        padding: expanded ? "18px 14px 14px" : "16px 10px 14px",
+        display: "flex", alignItems: "center",
         justifyContent: expanded ? "space-between" : "center",
-        borderBottom: "1px solid rgba(255,255,255,0.05)",
-        position: "relative",
-        zIndex: 1,
-        flexShrink: 0
+        borderBottom: "1px solid rgba(255,255,255,0.04)",
+        position: "relative", zIndex: 1, flexShrink: 0
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          {/* Logo mark */}
           <div style={{
-            width: "34px",
-            height: "34px",
-            background: "linear-gradient(135deg, #E8561A 0%, #C04010 100%)",
-            borderRadius: "10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "16px",
+            width: "32px", height: "32px",
+            background: "linear-gradient(145deg, #F06828 0%, #C03A10 100%)",
+            borderRadius: "9px",
+            display: "flex", alignItems: "center", justifyContent: "center",
             flexShrink: 0,
-            boxShadow: "0 4px 12px rgba(232,86,26,0.4)",
-            position: "relative",
-            overflow: "hidden"
+            boxShadow: "0 4px 14px rgba(232,86,26,0.45), inset 0 1px 0 rgba(255,255,255,0.15)"
           }}>
-            <div style={{
-              position: "absolute",
-              top: 0, left: 0, right: 0,
-              height: "50%",
-              background: "rgba(255,255,255,0.12)",
-              borderRadius: "10px 10px 0 0"
-            }} />
-            <span style={{ position: "relative", zIndex: 1 }}>✦</span>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M8 2L14 8L8 14L2 8L8 2Z" fill="rgba(255,255,255,0.9)" />
+              <circle cx="8" cy="8" r="2.5" fill="#F06828"/>
+            </svg>
           </div>
           {expanded && (
-            <div style={{
-              fontSize: "17px",
-              fontWeight: 700,
-              color: "#fff",
-              letterSpacing: "-0.3px",
-              lineHeight: 1
+            <span style={{
+              fontSize: "16px", fontWeight: 700, color: "#fff",
+              letterSpacing: "-0.4px", lineHeight: 1
             }}>
               Xere<span style={{ color: "#E8561A" }}>.</span>bo
-            </div>
+            </span>
           )}
         </div>
 
-        {expanded && (
-          <button
-            onClick={() => setExpanded(false)}
-            style={{
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: "7px",
-              width: "26px",
-              height: "26px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              color: "rgba(255,255,255,0.3)",
-              fontSize: "12px",
-              flexShrink: 0,
-              transition: "all 0.15s"
-            }}
-          >‹</button>
-        )}
-
-        {!expanded && (
-          <button
-            onClick={() => setExpanded(true)}
-            style={{
-              position: "absolute",
-              bottom: "-14px",
-              right: "-14px",
-              background: "#1A1208",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: "50%",
-              width: "28px",
-              height: "28px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              color: "rgba(255,255,255,0.4)",
-              fontSize: "12px",
-              zIndex: 10
-            }}
-          >›</button>
-        )}
-      </div>
-
-      {/* Search — only when expanded */}
-      {expanded && (
-        <div style={{ padding: "12px 14px 6px", position: "relative", zIndex: 1, flexShrink: 0 }}>
-          <div style={{
+        {/* Collapse toggle */}
+        <button
+          onClick={() => setExpanded(e => !e)}
+          style={{
             background: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            borderRadius: "10px",
-            padding: "8px 12px",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            cursor: "pointer",
-            transition: "border-color 0.15s"
+            border: "1px solid rgba(255,255,255,0.07)",
+            borderRadius: "7px",
+            width: "24px", height: "24px",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", color: "rgba(255,255,255,0.3)",
+            flexShrink: 0, transition: "all 0.15s",
+            ...(expanded ? {} : { position: "absolute" as const, bottom: "-12px", right: "-12px", borderRadius: "50%", width: "26px", height: "26px" })
           }}
           onMouseEnter={e => {
-            (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.15)"
+            (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.1)"
+            ;(e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.7)"
           }}
           onMouseLeave={e => {
-            (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.08)"
+            (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.05)"
+            ;(e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.3)"
           }}
+        >
+          {expanded
+            ? <ChevronLeft size={13} strokeWidth={2} />
+            : <ChevronRight size={13} strokeWidth={2} />
+          }
+        </button>
+      </div>
+
+      {/* ── Search ── */}
+      {expanded && (
+        <div style={{ padding: "6px 12px 2px", position: "relative", zIndex: 1, flexShrink: 0 }}>
+          <div style={{
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.07)",
+            borderRadius: "9px", padding: "7px 10px",
+            display: "flex", alignItems: "center", gap: "8px",
+            cursor: "pointer", transition: "border-color 0.15s"
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.13)" }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.07)" }}
           >
-            <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "13px" }}>⌕</span>
-            <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "12px", flex: 1 }}>Search...</span>
+            <Search size={13} color="rgba(255,255,255,0.2)" strokeWidth={2} />
+            <span style={{ color: "rgba(255,255,255,0.18)", fontSize: "12px", flex: 1 }}>Search...</span>
             <span style={{
-              fontSize: "9px",
-              background: "rgba(255,255,255,0.06)",
-              color: "rgba(255,255,255,0.2)",
-              padding: "2px 5px",
-              borderRadius: "4px",
-              border: "1px solid rgba(255,255,255,0.08)"
+              fontSize: "9px", background: "rgba(255,255,255,0.05)",
+              color: "rgba(255,255,255,0.18)", padding: "2px 5px",
+              borderRadius: "4px", border: "1px solid rgba(255,255,255,0.07)",
+              letterSpacing: "0.3px"
             }}>⌘K</span>
           </div>
         </div>
       )}
 
-      {/* Nav */}
-      <div style={{
-        padding: expanded ? "4px 10px" : "8px 8px",
-        flex: 1,
-        overflowY: "auto",
-        overflowX: "hidden",
-        position: "relative",
-        zIndex: 1,
-        scrollbarWidth: "none"
-      }}>
-        <SectionLabel label="Main" />
-        {navItems.map(item => <NavItem key={item.href} {...item} />)}
-
-        <SectionLabel label="Tools" />
-        {toolItems.map(item => <NavItem key={item.href} {...item} />)}
-
-        <SectionLabel label="Account" />
-        {accountItems.map(item => <NavItem key={item.href} {...item} />)}
-      </div>
-
-      {/* Footer */}
-      <div style={{
-        padding: expanded ? "10px 10px 14px" : "10px 8px 14px",
-        borderTop: "1px solid rgba(255,255,255,0.05)",
-        position: "relative",
-        zIndex: 1,
-        flexShrink: 0
+      {/* ── Nav ── */}
+      <nav style={{
+        padding: expanded ? "4px 10px" : "6px 8px",
+        flex: 1, overflowY: "auto", overflowX: "hidden",
+        position: "relative", zIndex: 1, scrollbarWidth: "none",
+        msOverflowStyle: "none"
       }}>
 
+        <NavGroup label="Main" expanded={expanded} />
+        {navItems.map(item => (
+          <NavItem key={item.href} {...item} active={isActive(item.href)} expanded={expanded} />
+        ))}
+
+        <Divider expanded={expanded} />
+
+        <NavGroup label="Tools" expanded={expanded} />
+        {toolItems.map(item => (
+          <NavItem key={item.href} {...item} active={isActive(item.href)} expanded={expanded} />
+        ))}
+
+      </nav>
+
+      {/* ── Footer ── */}
+      <div style={{
+        padding: expanded ? "8px 10px 14px" : "8px 8px 14px",
+        borderTop: "1px solid rgba(255,255,255,0.04)",
+        position: "relative", zIndex: 1, flexShrink: 0
+      }}>
+
+        {/* Settings link — always visible */}
+        <NavItem href="/settings" label="Settings" Icon={Settings} active={isActive("/settings")} expanded={expanded} />
+
+        {/* Plan bar */}
         {expanded && (
           <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "9px 10px",
-            background: "rgba(232,86,26,0.08)",
-            borderRadius: "10px",
-            marginBottom: "8px",
-            border: "1px solid rgba(232,86,26,0.15)"
+            padding: "9px 11px",
+            background: "rgba(232,86,26,0.07)",
+            border: "1px solid rgba(232,86,26,0.12)",
+            borderRadius: "10px", marginBottom: "6px"
           }}>
-            <div style={{
-              width: "24px", height: "24px", borderRadius: "7px",
-              background: "rgba(232,86,26,0.2)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "12px", flexShrink: 0
-            }}>⚡</div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", fontWeight: 500 }}>Free plan</span>
-                <span style={{ fontSize: "10px", color: "#E8561A", fontWeight: 600, cursor: "pointer" }}>Upgrade</span>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <Zap size={11} color="#E8561A" strokeWidth={2.5} />
+                <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", fontWeight: 500 }}>Free plan</span>
               </div>
+              <span style={{
+                fontSize: "10px", color: "#E8561A", fontWeight: 600, cursor: "pointer",
+                letterSpacing: "0.2px"
+              }}>Upgrade →</span>
+            </div>
+            <div style={{ height: "3px", background: "rgba(255,255,255,0.07)", borderRadius: "2px", overflow: "hidden" }}>
               <div style={{
-                height: "3px", background: "rgba(255,255,255,0.08)",
-                borderRadius: "100px", overflow: "hidden"
-              }}>
-                <div style={{
-                  height: "100%", width: "4%",
-                  background: "linear-gradient(90deg, #E8561A, #F07040)",
-                  borderRadius: "100px"
-                }} />
-              </div>
-              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.2)", marginTop: "3px" }}>
-                200 / 5,000 emails
-              </div>
+                height: "100%", width: "4%",
+                background: "linear-gradient(90deg, #E8561A, #FF7A3D)",
+                borderRadius: "2px"
+              }} />
+            </div>
+            <div style={{ fontSize: "9.5px", color: "rgba(255,255,255,0.18)", marginTop: "4px" }}>
+              200 / 5,000 emails sent
             </div>
           </div>
         )}
 
+        {/* User row */}
         <div style={{
-          display: "flex",
-          alignItems: "center",
+          display: "flex", alignItems: "center",
           gap: expanded ? "9px" : "0",
           justifyContent: expanded ? "flex-start" : "center",
-          padding: expanded ? "8px 10px" : "8px",
-          borderRadius: "10px",
-          cursor: "pointer",
+          padding: expanded ? "7px 9px" : "7px",
+          borderRadius: "10px", cursor: "pointer",
           transition: "background 0.15s"
         }}
-        onMouseEnter={e => {
-          (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.05)"
-        }}
-        onMouseLeave={e => {
-          (e.currentTarget as HTMLElement).style.background = "transparent"
-        }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)" }}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent" }}
         >
           <div style={{
-            width: "32px", height: "32px", borderRadius: "50%",
-            background: "linear-gradient(135deg, #E8561A 0%, #FF8C50 100%)",
+            width: "30px", height: "30px", borderRadius: "8px", flexShrink: 0,
+            background: "linear-gradient(135deg, #E8561A, #FF8C50)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "12px", fontWeight: 700, color: "#fff", flexShrink: 0,
+            fontSize: "12px", fontWeight: 700, color: "#fff",
             boxShadow: "0 2px 8px rgba(232,86,26,0.3)"
           }}>X</div>
           {expanded && (
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{
-                fontSize: "12.5px", fontWeight: 500,
-                color: "rgba(255,255,255,0.8)",
-                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
-              }}>Xerebo User</div>
-              <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.25)" }}>Admin · Free plan</div>
-            </div>
-          )}
-          {expanded && (
-            <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "12px" }}>⋮</span>
+            <>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontSize: "12px", fontWeight: 500,
+                  color: "rgba(255,255,255,0.75)",
+                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
+                }}>Xerebo User</div>
+                <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.22)" }}>Admin · Free plan</div>
+              </div>
+              <MoreHorizontal size={14} color="rgba(255,255,255,0.2)" strokeWidth={1.8} />
+            </>
           )}
         </div>
       </div>
     </div>
+  )
+}
+
+function NavItem({
+  href, label, Icon, active, expanded
+}: {
+  href: string
+  label: string
+  Icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>
+  active: boolean
+  expanded: boolean
+}) {
+  const [hovered, setHovered] = useState(false)
+
+  return (
+    <Link
+      href={href}
+      title={!expanded ? label : undefined}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "flex", alignItems: "center",
+        gap: expanded ? "10px" : "0",
+        justifyContent: expanded ? "flex-start" : "center",
+        padding: expanded ? "6px 10px" : "7px",
+        borderRadius: "9px",
+        marginBottom: "1px",
+        textDecoration: "none",
+        fontSize: "13px",
+        fontWeight: active ? 500 : 400,
+        color: active ? "#fff" : hovered ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.38)",
+        background: active
+          ? "rgba(232,86,26,0.13)"
+          : hovered
+          ? "rgba(255,255,255,0.05)"
+          : "transparent",
+        borderLeft: expanded
+          ? active ? "2px solid #E8561A" : "2px solid transparent"
+          : "none",
+        marginLeft: expanded ? "-2px" : "0",
+        paddingLeft: expanded ? "12px" : "9px",
+        transition: "all 0.17s ease",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      {/* Active glow */}
+      {active && (
+        <div style={{
+          position: "absolute", left: 0, top: 0, bottom: 0,
+          width: "60px",
+          background: "linear-gradient(90deg, rgba(232,86,26,0.12), transparent)",
+          pointerEvents: "none"
+        }} />
+      )}
+      <Icon
+        size={15}
+        strokeWidth={active ? 2.2 : 1.8}
+        color={active ? "#E8561A" : hovered ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.3)"}
+      />
+      {expanded && (
+        <span style={{
+          overflow: "hidden", whiteSpace: "nowrap",
+          transition: "opacity 0.2s", letterSpacing: "0.1px"
+        }}>{label}</span>
+      )}
+    </Link>
+  )
+}
+
+function NavGroup({ label, expanded }: { label: string; expanded: boolean }) {
+  if (!expanded) return null
+  return (
+    <div style={{
+      fontSize: "9px", fontWeight: 700, letterSpacing: "1.5px",
+      textTransform: "uppercase", color: "rgba(255,255,255,0.14)",
+      padding: "8px 10px 3px", userSelect: "none"
+    }}>{label}</div>
+  )
+}
+
+function Divider({ expanded }: { expanded: boolean }) {
+  return (
+    <div style={{
+      height: "1px",
+      background: "rgba(255,255,255,0.05)",
+      margin: expanded ? "5px 2px" : "5px 6px"
+    }} />
   )
 }

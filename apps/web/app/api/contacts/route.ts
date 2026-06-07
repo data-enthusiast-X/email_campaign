@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     const filter = searchParams.get("filter") || "all"
     const segment = searchParams.get("segment") || "all"
 
-    const where: any = { workspaceId: user.workspaceId }
+    const where: any = { workspaceId: user.workspaceId, deletedAt: null }
 
     if (filter === "subscribed") where.subscriptionStatus = "subscribed"
     if (filter === "verified") where.verificationStatus = "verified"

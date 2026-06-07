@@ -17,10 +17,17 @@ model Workspace {
   verifUsedMonth    Int             @default(0)
   verifLimit        Int             @default(500)
   createdAt         DateTime        @default(now())
+  brandName         String?
+  brandColour       String?         @default("#E8561A")
+  brandLogo         String?
+  brandWebsite      String?
   users             User[]
   contacts          Contact[]
   campaigns         Campaign[]
   sendingDomains    SendingDomain[]
+  tags              Tag[]
+  activityLogs      ActivityLog[]
+  importLogs        ImportLog[]
 }
 
 model User {
@@ -49,8 +56,22 @@ model Contact {
   engagementScore       Int       @default(0)
   lifecycleStage        String    @default("lead")
   source                String?
+  country               String?
+  city                  String?
+  region                String?
+  timezone              String?
+  language              String?
+  lastSeenAt            DateTime?
+  lastSeenDevice        String?
+  lastSeenClient        String?
+  lastSeenIp            String?
   createdAt             DateTime  @default(now())
+  deletedAt             DateTime?
+  deletedBy             String?
+  unsubscribeReason     String?
+  subscriptionUpdatedAt DateTime?
   workspace             Workspace @relation(fields: [workspaceId], references: [id])
+  tags                  ContactTag[]
 
   @@unique([workspaceId, email])
   @@index([workspaceId, verificationStatus])
@@ -88,4 +109,51 @@ model SendingDomain {
   healthScore      Int       @default(0)
   createdAt        DateTime  @default(now())
   workspace        Workspace @relation(fields: [workspaceId], references: [id])
+}
+
+model Tag {
+  id          String       @id @default(cuid())
+  workspaceId String
+  name        String
+  colour      String       @default("#E8561A")
+  createdAt   DateTime     @default(now())
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id])
+  contacts    ContactTag[]
+
+  @@unique([workspaceId, name])
+}
+
+model ContactTag {
+  contactId String
+  tagId     String
+  addedAt   DateTime @default(now())
+  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([contactId, tagId])
+}
+
+model ActivityLog {
+  id          String    @id @default(cuid())
+  workspaceId String
+  contactId   String?
+  userId      String?
+  userEmail   String?
+  action      String
+  details     Json?
+  createdAt   DateTime  @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+}
+
+model ImportLog {
+  id          String    @id @default(cuid())
+  workspaceId String
+  userId      String?
+  userEmail   String?
+  fileName    String
+  added       Int       @default(0)
+  skipped     Int       @default(0)
+  totalRows   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
 }
