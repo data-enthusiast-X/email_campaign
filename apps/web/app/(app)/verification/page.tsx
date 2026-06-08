@@ -2,6 +2,11 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import {
+  CheckCircle2, XCircle, AlertTriangle, HelpCircle,
+  Check, X, Zap, Bot, ShieldOff, Mail, Globe, Server,
+  Target, Sparkles, BarChart2, MailX, ArrowRight,
+} from "lucide-react"
 
 const pageBg: React.CSSProperties = {
   minHeight: "100vh",
@@ -25,10 +30,10 @@ const glass: React.CSSProperties = {
 
 function getStatusStyle(status: string) {
   switch (status) {
-    case "valid":   return { bg: "rgba(15,110,86,0.08)",  border: "rgba(15,110,86,0.18)",  color: "#0F6E56", icon: "✓", label: "Valid" }
-    case "invalid": return { bg: "rgba(153,60,29,0.08)",  border: "rgba(153,60,29,0.18)",  color: "#993C1D", icon: "✗", label: "Invalid" }
-    case "risky":   return { bg: "rgba(133,79,11,0.08)",  border: "rgba(133,79,11,0.18)",  color: "#854F0B", icon: "⚠", label: "Risky" }
-    default:        return { bg: "rgba(184,168,152,0.10)", border: "rgba(184,168,152,0.20)", color: "#8A7A6A", icon: "?", label: "Unknown" }
+    case "valid":   return { bg: "rgba(15,110,86,0.08)",   border: "rgba(15,110,86,0.18)",   color: "#0F6E56", label: "Valid",   Icon: CheckCircle2 }
+    case "invalid": return { bg: "rgba(153,60,29,0.08)",   border: "rgba(153,60,29,0.18)",   color: "#993C1D", label: "Invalid", Icon: XCircle }
+    case "risky":   return { bg: "rgba(133,79,11,0.08)",   border: "rgba(133,79,11,0.18)",   color: "#854F0B", label: "Risky",   Icon: AlertTriangle }
+    default:        return { bg: "rgba(184,168,152,0.10)", border: "rgba(184,168,152,0.20)", color: "#8A7A6A", label: "Unknown", Icon: HelpCircle }
   }
 }
 
@@ -47,13 +52,23 @@ interface Stats {
   verificationRate: number; avgScore: number; recentLogs: any[]
 }
 
+const WHAT_CHECKS = [
+  { Icon: Zap,      text: "Syntax & format validation" },
+  { Icon: Bot,      text: "Gibberish & bot detection" },
+  { Icon: ShieldOff,text: "100,000+ disposable domains" },
+  { Icon: Mail,     text: "Webmail provider detection" },
+  { Icon: Globe,    text: "DNS MX record lookup" },
+  { Icon: Server,   text: "SMTP mailbox verification" },
+  { Icon: Target,   text: "Catch-all server detection" },
+]
+
 const LAYERS = [
-  { num: 1, name: "Instant checks",      sub: "Syntax · Gibberish · Disposable · Webmail",  status: "active",   day: "Day 1" },
-  { num: 2, name: "DNS checks",           sub: "MX record · Server type · Fingerprinting",   status: "active",   day: "Day 1" },
-  { num: 3, name: "SMTP verification",    sub: "Connection · Tickling · Response time",       status: "active",   day: "Day 2" },
-  { num: 4, name: "Catch-all resolution", sub: "Timing attack · Pattern match · Confidence", status: "active",   day: "Day 3" },
-  { num: 5, name: "AI scoring",           sub: "Confidence model · Spam trap · Domain rep",  status: "planned",  day: "Week 6" },
-  { num: 6, name: "Engagement data",      sub: "Bounce feedback · Opens · Clicks",           status: "planned",  day: "Week 7" },
+  { num: 1, name: "Instant checks",      sub: "Syntax · Gibberish · Disposable · Webmail",  Icon: Zap,       status: "active",  day: "Day 1" },
+  { num: 2, name: "DNS checks",           sub: "MX record · Server type · Fingerprinting",   Icon: Globe,     status: "active",  day: "Day 1" },
+  { num: 3, name: "SMTP verification",    sub: "Connection · Tickling · Response time",       Icon: Server,    status: "active",  day: "Day 2" },
+  { num: 4, name: "Catch-all resolution", sub: "Timing attack · Pattern match · Confidence", Icon: Target,    status: "active",  day: "Day 3" },
+  { num: 5, name: "AI scoring",           sub: "Confidence model · Spam trap · Domain rep",  Icon: Sparkles,  status: "planned", day: "Week 6" },
+  { num: 6, name: "Engagement data",      sub: "Bounce feedback · Opens · Clicks",           Icon: BarChart2, status: "planned", day: "Week 7" },
 ]
 
 export default function VerificationPage() {
@@ -101,15 +116,16 @@ export default function VerificationPage() {
         .verif-input:focus { outline:none; border-color:rgba(232,86,26,0.5) !important; box-shadow:0 0 0 3px rgba(232,86,26,0.10); }
         .stat-card:hover   { transform:translateY(-2px); box-shadow:0 8px 28px rgba(232,86,26,0.10), 0 2px 8px rgba(0,0,0,0.04) !important; }
         .log-row:hover     { background:rgba(253,245,238,0.7) !important; }
+        .layer-card:hover  { transform:translateY(-1px); }
       `}</style>
 
-      {/* Action bar — no repeated title, Topbar already has page identity */}
+      {/* Action bar */}
       <div style={{
         background: "rgba(253,245,238,0.88)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
         borderBottom: "1px solid rgba(234,224,213,0.7)",
         padding: "10px 24px", display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <span style={{
             fontSize: "10px", fontWeight: 700, padding: "3px 9px", borderRadius: "20px",
             background: "rgba(15,110,86,0.10)", color: "#0F6E56", letterSpacing: "0.5px",
@@ -128,8 +144,10 @@ export default function VerificationPage() {
             color: "#fff", fontSize: "12px", fontWeight: 600,
             cursor: "pointer", fontFamily: "inherit",
             boxShadow: "0 4px 14px rgba(232,86,26,0.28)",
-            transition: "all 0.15s",
-          }}>Verify all contacts →</button>
+            display: "flex", alignItems: "center", gap: "5px",
+          }}>
+            Verify all contacts <ArrowRight size={12} />
+          </button>
         </Link>
       </div>
 
@@ -147,12 +165,12 @@ export default function VerificationPage() {
             {/* ── Stat Cards ── */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(6,1fr)", gap: "10px", marginBottom: "18px" }}>
               {[
-                { label: "Total",     value: stats.contacts.total,      color: "#130E08", bg: "rgba(19,14,8,0.05)",     bar: "#C8B8A8" },
-                { label: "Valid",     value: stats.contacts.verified,   color: "#0F6E56", bg: "rgba(15,110,86,0.07)",   bar: "#0F6E56" },
-                { label: "Invalid",   value: stats.contacts.invalid,    color: "#993C1D", bg: "rgba(153,60,29,0.07)",   bar: "#993C1D" },
-                { label: "Risky",     value: stats.contacts.risky,      color: "#854F0B", bg: "rgba(133,79,11,0.07)",   bar: "#C8820A" },
-                { label: "Unknown",   value: stats.contacts.unknown,    color: "#8A7A6A", bg: "rgba(138,122,106,0.06)", bar: "#B8A898" },
-                { label: "Not yet",   value: stats.contacts.unverified, color: "#B8A898", bg: "rgba(184,168,152,0.05)", bar: "#D8C8B8" },
+                { label: "Total",   value: stats.contacts.total,      color: "#130E08", bar: "#C8B8A8" },
+                { label: "Valid",   value: stats.contacts.verified,   color: "#0F6E56", bar: "#0F6E56" },
+                { label: "Invalid", value: stats.contacts.invalid,    color: "#993C1D", bar: "#993C1D" },
+                { label: "Risky",   value: stats.contacts.risky,      color: "#854F0B", bar: "#C8820A" },
+                { label: "Unknown", value: stats.contacts.unknown,    color: "#8A7A6A", bar: "#B8A898" },
+                { label: "Not yet", value: stats.contacts.unverified, color: "#B8A898", bar: "#D8C8B8" },
               ].map((s, i) => (
                 <div key={i} className="stat-card" style={{
                   ...glass, padding: "14px 16px", textAlign: "center",
@@ -162,7 +180,7 @@ export default function VerificationPage() {
                     position: "absolute", top: 0, left: 0, right: 0, height: "3px",
                     background: s.bar, borderRadius: "18px 18px 0 0", opacity: 0.7,
                   }} />
-                  <div style={{ fontSize: "24px", fontWeight: 800, color: s.color, letterSpacing: "-1px", lineHeight: 1.1, marginTop: "2px" }}>
+                  <div style={{ fontSize: "24px", fontWeight: 800, color: s.color, letterSpacing: "-1px", lineHeight: 1.1, marginTop: "4px" }}>
                     {s.value.toLocaleString()}
                   </div>
                   <div style={{ fontSize: "10px", color: "#B8A898", marginTop: "5px", textTransform: "uppercase", letterSpacing: "0.8px", fontWeight: 600 }}>
@@ -209,22 +227,22 @@ export default function VerificationPage() {
                       fontSize: "12px", fontWeight: 600,
                       color: testEmail.trim() && !testing ? "#fff" : "#B8A898",
                       cursor: testEmail.trim() && !testing ? "pointer" : "not-allowed",
-                      fontFamily: "inherit", flexShrink: 0,
-                      transition: "all 0.15s",
+                      fontFamily: "inherit", flexShrink: 0, transition: "all 0.15s",
                       boxShadow: testEmail.trim() && !testing ? "0 4px 12px rgba(232,86,26,0.28)" : "none",
-                      minWidth: "70px", display: "flex", alignItems: "center", justifyContent: "center",
+                      minWidth: "76px", display: "flex", alignItems: "center", justifyContent: "center", gap: "5px",
                     }}
                   >
                     {testing ? (
                       <div style={{ width: "14px", height: "14px", borderRadius: "50%", border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", animation: "spin 0.7s linear infinite" }} />
-                    ) : "Verify →"}
+                    ) : <><span>Verify</span><ArrowRight size={12} /></>}
                   </button>
                 </div>
 
                 {testResult ? (() => {
                   const s = getStatusStyle(testResult.status)
+                  const StatusIcon = s.Icon
                   const checks = [
-                    { label: "Syntax valid",          pass: testResult.checks.syntax },
+                    { label: "Syntax valid",         pass: testResult.checks.syntax },
                     { label: "Not gibberish",         pass: !testResult.checks.gibberish },
                     { label: "Not disposable",        pass: !testResult.checks.disposable },
                     { label: "Has MX record",         pass: testResult.checks.hasMX },
@@ -237,10 +255,11 @@ export default function VerificationPage() {
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                           <div style={{
-                            width: "32px", height: "32px", borderRadius: "50%",
-                            background: `${s.border}`, display: "flex", alignItems: "center", justifyContent: "center",
-                            fontSize: "15px", fontWeight: 700, color: s.color,
-                          }}>{s.icon}</div>
+                            width: "34px", height: "34px", borderRadius: "50%",
+                            background: s.border, display: "flex", alignItems: "center", justifyContent: "center",
+                          }}>
+                            <StatusIcon size={16} color={s.color} strokeWidth={2.2} />
+                          </div>
                           <div>
                             <div style={{ fontSize: "14px", fontWeight: 700, color: s.color, textTransform: "capitalize" }}>{testResult.status}</div>
                             <div style={{ fontSize: "11px", color: s.color, opacity: 0.7 }}>
@@ -262,23 +281,27 @@ export default function VerificationPage() {
                         {checks.map((c, i) => (
                           <div key={i} style={{
                             display: "flex", alignItems: "center", gap: "6px",
-                            fontSize: "11.5px", color: s.color, opacity: c.pass ? 0.9 : 0.55,
+                            fontSize: "11.5px", color: s.color, opacity: c.pass ? 0.9 : 0.5,
                           }}>
-                            <span style={{
+                            <div style={{
                               width: "16px", height: "16px", borderRadius: "50%", flexShrink: 0,
                               background: c.pass ? "rgba(15,110,86,0.15)" : "rgba(153,60,29,0.12)",
                               display: "flex", alignItems: "center", justifyContent: "center",
-                              fontSize: "9px", fontWeight: 700,
-                              color: c.pass ? "#0F6E56" : "#993C1D",
-                            }}>{c.pass ? "✓" : "✗"}</span>
+                            }}>
+                              {c.pass
+                                ? <Check size={9} color="#0F6E56" strokeWidth={3} />
+                                : <X size={9} color="#993C1D" strokeWidth={3} />
+                              }
+                            </div>
                             {c.label}
                           </div>
                         ))}
                       </div>
 
                       {testResult.checks.webmail && (
-                        <div style={{ marginTop: "10px", fontSize: "11px", color: s.color, opacity: 0.65, display: "flex", alignItems: "center", gap: "4px" }}>
-                          <span>📧</span> Personal / Webmail address
+                        <div style={{ marginTop: "10px", fontSize: "11px", color: s.color, opacity: 0.65, display: "flex", alignItems: "center", gap: "5px" }}>
+                          <Mail size={11} color={s.color} />
+                          Personal / Webmail address
                         </div>
                       )}
                     </div>
@@ -289,22 +312,20 @@ export default function VerificationPage() {
                     border: "1px solid rgba(232,86,26,0.10)",
                     borderRadius: "12px", padding: "16px",
                   }}>
-                    <div style={{ fontSize: "11.5px", fontWeight: 700, color: "#6B5040", marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.6px" }}>
+                    <div style={{ fontSize: "10.5px", fontWeight: 700, color: "#B8A898", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "0.8px" }}>
                       What gets checked
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                      {[
-                        { icon: "⚡", text: "Syntax & format validation" },
-                        { icon: "🤖", text: "Gibberish & bot detection" },
-                        { icon: "🚫", text: "100,000+ disposable domains" },
-                        { icon: "📬", text: "Webmail provider detection" },
-                        { icon: "🔍", text: "DNS MX record lookup" },
-                        { icon: "🖧",  text: "SMTP mailbox verification" },
-                        { icon: "🎯", text: "Catch-all server detection" },
-                      ].map((item, i) => (
-                        <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "#6B5040" }}>
-                          <span style={{ fontSize: "13px" }}>{item.icon}</span>
-                          {item.text}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      {WHAT_CHECKS.map(({ Icon, text }, i) => (
+                        <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <div style={{
+                            width: "26px", height: "26px", borderRadius: "7px", flexShrink: 0,
+                            background: "rgba(232,86,26,0.08)", border: "1px solid rgba(232,86,26,0.10)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                          }}>
+                            <Icon size={13} color="#E8561A" strokeWidth={1.8} />
+                          </div>
+                          <span style={{ fontSize: "12px", color: "#6B5040", fontWeight: 500 }}>{text}</span>
                         </div>
                       ))}
                     </div>
@@ -329,14 +350,13 @@ export default function VerificationPage() {
                   )}
                 </div>
 
-                {/* Mini progress bar */}
                 {stats.contacts.total > 0 && (() => {
                   const t = stats.contacts.total
                   const segs = [
-                    { w: (stats.contacts.verified  / t) * 100, c: "#0F6E56" },
-                    { w: (stats.contacts.risky     / t) * 100, c: "#C8820A" },
-                    { w: (stats.contacts.invalid   / t) * 100, c: "#993C1D" },
-                    { w: (stats.contacts.unknown   / t) * 100, c: "#B8A898" },
+                    { w: (stats.contacts.verified / t) * 100, c: "#0F6E56" },
+                    { w: (stats.contacts.risky    / t) * 100, c: "#C8820A" },
+                    { w: (stats.contacts.invalid  / t) * 100, c: "#993C1D" },
+                    { w: (stats.contacts.unknown  / t) * 100, c: "#B8A898" },
                   ]
                   return (
                     <div style={{ height: "5px", borderRadius: "10px", overflow: "hidden", background: "rgba(234,224,213,0.5)", marginBottom: "14px", display: "flex" }}>
@@ -350,13 +370,16 @@ export default function VerificationPage() {
                 <div style={{ flex: 1, overflowY: "auto" }}>
                   {stats.recentLogs.length === 0 ? (
                     <div style={{ textAlign: "center", padding: "40px 20px", color: "#B8A898" }}>
-                      <div style={{ fontSize: "28px", marginBottom: "8px" }}>📭</div>
-                      <div style={{ fontSize: "13px", fontWeight: 500 }}>No verifications yet</div>
-                      <div style={{ fontSize: "11px", marginTop: "4px" }}>Test an email on the left to get started</div>
+                      <div style={{ display: "flex", justifyContent: "center", marginBottom: "10px" }}>
+                        <MailX size={32} color="#D8C8B8" strokeWidth={1.5} />
+                      </div>
+                      <div style={{ fontSize: "13px", fontWeight: 600, color: "#B8A898" }}>No verifications yet</div>
+                      <div style={{ fontSize: "11px", marginTop: "4px", color: "#C8B8A8" }}>Test an email on the left to get started</div>
                     </div>
                   ) : (
                     stats.recentLogs.map((log: any, i: number) => {
                       const s = getStatusStyle(log.status)
+                      const LogIcon = s.Icon
                       return (
                         <div key={log.id} className="log-row" style={{
                           display: "flex", alignItems: "center", gap: "10px",
@@ -365,11 +388,12 @@ export default function VerificationPage() {
                           transition: "background 0.12s",
                         }}>
                           <div style={{
-                            width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0,
+                            width: "30px", height: "30px", borderRadius: "50%", flexShrink: 0,
                             background: s.bg, border: `1px solid ${s.border}`,
                             display: "flex", alignItems: "center", justifyContent: "center",
-                            fontSize: "12px", fontWeight: 700, color: s.color,
-                          }}>{s.icon}</div>
+                          }}>
+                            <LogIcon size={14} color={s.color} strokeWidth={2} />
+                          </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#130E08", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                               {log.email}
@@ -391,19 +415,18 @@ export default function VerificationPage() {
               </div>
             </div>
 
-            {/* ── Engine status ── */}
+            {/* ── Engine layers ── */}
             <div style={{ ...glass, padding: "22px" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "18px" }}>
                 <div>
                   <div style={{ fontSize: "13px", fontWeight: 700, color: "#130E08", marginBottom: "2px" }}>Engine layers</div>
                   <div style={{ fontSize: "11px", color: "#B8A898" }}>4 active · 2 on roadmap</div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                   {LAYERS.map((l, i) => (
                     <div key={i} style={{
                       width: "28px", height: "5px", borderRadius: "10px",
                       background: l.status === "active" ? "#0F6E56" : "rgba(184,168,152,0.25)",
-                      transition: "all 0.2s",
                     }} />
                   ))}
                 </div>
@@ -412,13 +435,13 @@ export default function VerificationPage() {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(6,1fr)", gap: "10px" }}>
                 {LAYERS.map((layer, i) => {
                   const active = layer.status === "active"
+                  const LayerIcon = layer.Icon
                   return (
-                    <div key={i} style={{
+                    <div key={i} className="layer-card" style={{
                       borderRadius: "12px", padding: "14px",
-                      background: active ? "rgba(15,110,86,0.07)" : "rgba(234,224,213,0.35)",
+                      background: active ? "rgba(15,110,86,0.07)" : "rgba(234,224,213,0.30)",
                       border: active ? "1px solid rgba(15,110,86,0.18)" : "1px solid rgba(234,224,213,0.6)",
-                      position: "relative", overflow: "hidden",
-                      transition: "all 0.2s",
+                      position: "relative", overflow: "hidden", transition: "all 0.2s", cursor: "default",
                     }}>
                       {active && (
                         <div style={{
@@ -426,18 +449,24 @@ export default function VerificationPage() {
                           background: "linear-gradient(90deg, #0F6E56, #1AA07A)",
                         }} />
                       )}
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
+                        <div style={{
+                          width: "28px", height: "28px", borderRadius: "8px",
+                          background: active ? "rgba(15,110,86,0.12)" : "rgba(184,168,152,0.14)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                        }}>
+                          <LayerIcon size={14} color={active ? "#0F6E56" : "#B8A898"} strokeWidth={1.8} />
+                        </div>
                         <span style={{
-                          fontSize: "9.5px", fontWeight: 700,
-                          color: active ? "#0F6E56" : "#B8A898",
-                          textTransform: "uppercase", letterSpacing: "0.7px",
-                        }}>Layer {layer.num}</span>
-                        <span style={{
-                          fontSize: "9px", fontWeight: 600, padding: "2px 6px", borderRadius: "10px",
-                          background: active ? "rgba(15,110,86,0.12)" : "rgba(184,168,152,0.18)",
-                          color: active ? "#0F6E56" : "#B8A898",
+                          fontSize: "9px", fontWeight: 700, padding: "2px 7px", borderRadius: "10px",
+                          background: active ? "rgba(15,110,86,0.10)" : "rgba(184,168,152,0.15)",
+                          color: active ? "#0F6E56" : "#B8A898", letterSpacing: "0.3px",
                         }}>{layer.day}</span>
                       </div>
+                      <div style={{
+                        fontSize: "9px", fontWeight: 700, color: active ? "#0F6E56" : "#B8A898",
+                        textTransform: "uppercase", letterSpacing: "0.7px", marginBottom: "4px",
+                      }}>Layer {layer.num}</div>
                       <div style={{ fontSize: "12px", fontWeight: 700, color: active ? "#130E08" : "#B8A898", marginBottom: "5px", lineHeight: 1.25 }}>
                         {layer.name}
                       </div>
