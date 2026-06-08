@@ -9,33 +9,29 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
-    }
+    const workspaceId = (session.user as any).workspaceId as string
+    const userId = session.user.id as string
+    const userEmail = session.user.email
 
     const { ids } = await request.json()
 
     await prisma.contact.updateMany({
-      where: { id: { in: ids }, workspaceId: user.workspaceId },
-      data: { deletedAt: new Date(), deletedBy: user.email }
+      where: { id: { in: ids }, workspaceId },
+      data: { deletedAt: new Date(), deletedBy: userEmail }
     })
 
     await prisma.activityLog.create({
       data: {
-        workspaceId: user.workspaceId,
-        userId: user.id,
-        userEmail: user.email,
+        workspaceId,
+        userId,
+        userEmail,
         action: "contacts_bulk_deleted",
         details: { count: ids.length, ids }
       }
     })
 
     return NextResponse.json({ message: `${ids.length} contacts moved to recycle bin` })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Bulk delete failed" }, { status: 500 })
   }
 }
@@ -57,7 +53,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ message: "Action completed" })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Bulk action failed" }, { status: 500 })
   }
 }

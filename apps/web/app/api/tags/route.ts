@@ -8,11 +8,11 @@ export async function GET() {
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
-    const user = await prisma.user.findUnique({ where: { email: session.user.email } })
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
+
+    const workspaceId = (session.user as any).workspaceId as string
 
     const tags = await prisma.tag.findMany({
-      where: { workspaceId: user.workspaceId },
+      where: { workspaceId },
       include: { _count: { select: { contacts: true } } },
       orderBy: { name: "asc" },
     })
@@ -28,15 +28,15 @@ export async function POST(request: Request) {
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
-    const user = await prisma.user.findUnique({ where: { email: session.user.email } })
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
+
+    const workspaceId = (session.user as any).workspaceId as string
 
     const { name, colour } = await request.json()
     if (!name) return NextResponse.json({ error: "Name required" }, { status: 400 })
 
     const tag = await prisma.tag.create({
       data: {
-        workspaceId: user.workspaceId,
+        workspaceId,
         name: name.trim(),
         colour: colour || "#E8561A",
       },

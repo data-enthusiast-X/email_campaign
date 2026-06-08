@@ -8,13 +8,12 @@ export async function GET(request: Request) {
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
-    const user = await prisma.user.findUnique({ where: { email: session.user.email } })
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
 
+    const workspaceId = (session.user as any).workspaceId as string
     const { searchParams } = new URL(request.url)
     const contactId = searchParams.get("contactId")
 
-    const where: any = { workspaceId: user.workspaceId }
+    const where: any = { workspaceId }
     if (contactId) where.contactId = contactId
 
     const logs = await prisma.activityLog.findMany({
@@ -35,17 +34,19 @@ export async function POST(request: Request) {
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
-    const user = await prisma.user.findUnique({ where: { email: session.user.email } })
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
+
+    const workspaceId = (session.user as any).workspaceId as string
+    const userId = session.user.id as string
+    const userEmail = session.user.email
 
     const { contactId, action, details } = await request.json()
 
     const log = await prisma.activityLog.create({
       data: {
-        workspaceId: user.workspaceId,
+        workspaceId,
         contactId: contactId || null,
-        userId: user.id,
-        userEmail: user.email,
+        userId,
+        userEmail,
         action,
         details: details || {},
       },

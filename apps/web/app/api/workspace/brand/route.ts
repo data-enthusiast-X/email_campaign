@@ -8,13 +8,11 @@ export async function GET() {
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      include: { workspace: true }
-    })
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
 
-    return NextResponse.json({ workspace: user.workspace })
+    const workspaceId = (session.user as any).workspaceId as string
+
+    const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId } })
+    return NextResponse.json({ workspace })
   } catch {
     return NextResponse.json({ error: "Failed to fetch brand" }, { status: 500 })
   }
@@ -26,15 +24,12 @@ export async function PATCH(request: Request) {
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
 
+    const workspaceId = (session.user as any).workspaceId as string
     const { brandName, brandColour, brandLogo, brandWebsite } = await request.json()
 
     const workspace = await prisma.workspace.update({
-      where: { id: user.workspaceId },
+      where: { id: workspaceId },
       data: {
         brandName: brandName || null,
         brandColour: brandColour || "#E8561A",

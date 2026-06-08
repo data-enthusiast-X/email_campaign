@@ -33,26 +33,23 @@ export async function POST(
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
+    const workspaceId = (session.user as any).workspaceId as string
     const { tagId } = await request.json()
 
     await prisma.contactTag.create({ data: { contactId: id, tagId } })
 
-    const [tag, contact] = await Promise.all([
-      prisma.tag.findUnique({ where: { id: tagId } }),
-      prisma.contact.findUnique({ where: { id }, select: { workspaceId: true } }),
-    ])
+    const tag = await prisma.tag.findUnique({ where: { id: tagId } })
 
-    if (contact?.workspaceId) {
-      await prisma.activityLog.create({
-        data: {
-          workspaceId: contact.workspaceId,
-          contactId: id,
-          userEmail: session.user.email,
-          action: "tag_added",
-          details: { tagName: tag?.name || tagId },
-        },
-      })
-    }
+    await prisma.activityLog.create({
+      data: {
+        workspaceId,
+        contactId: id,
+        userEmail: session.user.email,
+        action: "tag_added",
+        details: { tagName: tag?.name || tagId },
+      },
+    })
 
     return NextResponse.json({ message: "Tag added" })
   } catch {
@@ -70,28 +67,25 @@ export async function DELETE(
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
+    const workspaceId = (session.user as any).workspaceId as string
     const { tagId } = await request.json()
 
-    const [tag, contact] = await Promise.all([
-      prisma.tag.findUnique({ where: { id: tagId } }),
-      prisma.contact.findUnique({ where: { id }, select: { workspaceId: true } }),
-    ])
+    const tag = await prisma.tag.findUnique({ where: { id: tagId } })
 
     await prisma.contactTag.delete({
       where: { contactId_tagId: { contactId: id, tagId } },
     })
 
-    if (contact?.workspaceId) {
-      await prisma.activityLog.create({
-        data: {
-          workspaceId: contact.workspaceId,
-          contactId: id,
-          userEmail: session.user.email,
-          action: "tag_removed",
-          details: { tagName: tag?.name || tagId },
-        },
-      })
-    }
+    await prisma.activityLog.create({
+      data: {
+        workspaceId,
+        contactId: id,
+        userEmail: session.user.email,
+        action: "tag_removed",
+        details: { tagName: tag?.name || tagId },
+      },
+    })
 
     return NextResponse.json({ message: "Tag removed" })
   } catch {

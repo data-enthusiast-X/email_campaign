@@ -28,6 +28,7 @@ model Workspace {
   tags              Tag[]
   activityLogs      ActivityLog[]
   importLogs        ImportLog[]
+  verificationLogs  VerificationLog[]
 }
 
 model User {
@@ -82,17 +83,24 @@ model Campaign {
   id             String    @id @default(cuid())
   workspaceId    String
   name           String
-  subject        String?
-  previewText    String?
-  fromName       String?
-  fromEmail      String?
-  htmlContent    String?
+  subject        String    @default("")
+  previewText    String    @default("")
+  fromName       String    @default("")
+  fromEmail      String    @default("")
+  htmlContent    String    @default("")
   status         String    @default("draft")
   recipientCount Int       @default(0)
+  verifiedCount  Int       @default(0)
+  invalidCount   Int       @default(0)
+  riskyCount     Int       @default(0)
+  unknownCount   Int       @default(0)
   scheduledAt    DateTime?
   sentAt         DateTime?
   createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
   workspace      Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId])
 }
 
 model SendingDomain {
@@ -156,4 +164,31 @@ model ImportLog {
   totalRows   Int       @default(0)
   createdAt   DateTime  @default(now())
   workspace   Workspace @relation(fields: [workspaceId], references: [id])
+}
+
+model VerificationLog {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  contactId     String?
+  email         String
+  status        String
+  score         Int       @default(0)
+  syntaxPass    Boolean   @default(false)
+  gibberishPass Boolean   @default(false)
+  isDisposable  Boolean   @default(false)
+  isWebmail     Boolean   @default(false)
+  hasMX         Boolean   @default(false)
+  serverType    String?
+  smtpConnects  Boolean   @default(false)
+  smtpAccepts   Boolean   @default(false)
+  isCatchAll    Boolean   @default(false)
+  responseTime  Int       @default(0)
+  reason        String?
+  detail        String?
+  checkedAt     DateTime  @default(now())
+  workspace     Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId, email])
+  @@index([workspaceId, status])
+  @@index([contactId])
 }

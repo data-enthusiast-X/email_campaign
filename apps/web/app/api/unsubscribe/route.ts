@@ -11,7 +11,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Invalid token" }, { status: 400 })
     }
 
-    const decoded = jwt.verify(token, process.env.NEXTAUTH_SECRET!) as {
+    const decoded = jwt.verify(token, process.env.UNSUBSCRIBE_SECRET!) as {
       contactId: string
       workspaceId: string
     }
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid token" }, { status: 400 })
     }
 
-    const decoded = jwt.verify(token, process.env.NEXTAUTH_SECRET!) as {
+    const decoded = jwt.verify(token, process.env.UNSUBSCRIBE_SECRET!) as {
       contactId: string
       workspaceId: string
     }

@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     const token = searchParams.get("token")
     if (!token) return NextResponse.json({ name: "Xerebo", colour: "#E8561A", logo: null })
 
-    const decoded = jwt.verify(token, process.env.NEXTAUTH_SECRET!) as {
+    const decoded = jwt.verify(token, process.env.UNSUBSCRIBE_SECRET!) as {
       workspaceId: string
     }
 

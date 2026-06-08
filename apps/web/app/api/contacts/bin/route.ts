@@ -9,11 +9,10 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({ where: { email: session.user.email } })
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
+    const workspaceId = (session.user as any).workspaceId as string
 
     const contacts = await prisma.contact.findMany({
-      where: { workspaceId: user.workspaceId, deletedAt: { not: null } },
+      where: { workspaceId, deletedAt: { not: null } },
       orderBy: { deletedAt: "desc" }
     })
 
@@ -30,23 +29,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({ where: { email: session.user.email } })
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
+    const workspaceId = (session.user as any).workspaceId as string
+    const userId = session.user.id as string
+    const userEmail = session.user.email
 
     const { action, ids } = await request.json()
 
     if (action === "restore") {
       await prisma.contact.updateMany({
-        where: { id: { in: ids }, workspaceId: user.workspaceId },
+        where: { id: { in: ids }, workspaceId },
         data: { deletedAt: null, deletedBy: null }
       })
 
       await prisma.activityLog.createMany({
         data: ids.map((id: string) => ({
-          workspaceId: user.workspaceId,
+          workspaceId,
           contactId: id,
-          userId: user.id,
-          userEmail: user.email,
+          userId,
+          userEmail,
           action: "contact_restored",
           details: {}
         }))
@@ -57,14 +57,14 @@ export async function POST(request: Request) {
 
     if (action === "permanent_delete") {
       await prisma.contact.deleteMany({
-        where: { id: { in: ids }, workspaceId: user.workspaceId, deletedAt: { not: null } }
+        where: { id: { in: ids }, workspaceId, deletedAt: { not: null } }
       })
       return NextResponse.json({ message: `${ids.length} contacts permanently deleted` })
     }
 
     if (action === "empty_bin") {
       await prisma.contact.deleteMany({
-        where: { workspaceId: user.workspaceId, deletedAt: { not: null } }
+        where: { workspaceId, deletedAt: { not: null } }
       })
       return NextResponse.json({ message: "Recycle bin emptied" })
     }
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
       await prisma.contact.deleteMany({
-        where: { workspaceId: user.workspaceId, deletedAt: { lt: sevenDaysAgo } }
+        where: { workspaceId, deletedAt: { lt: sevenDaysAgo } }
       })
       return NextResponse.json({ message: "Auto cleanup done" })
     }

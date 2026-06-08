@@ -8,11 +8,11 @@ export async function GET() {
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
-    const user = await prisma.user.findUnique({ where: { email: session.user.email } })
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
+
+    const workspaceId = (session.user as any).workspaceId as string
 
     const imports = await prisma.importLog.findMany({
-      where: { workspaceId: user.workspaceId },
+      where: { workspaceId },
       orderBy: { createdAt: "desc" },
       take: 20,
     })

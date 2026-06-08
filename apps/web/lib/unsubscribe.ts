@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken"
 export function generateUnsubscribeToken(contactId: string, workspaceId: string): string {
   return jwt.sign(
     { contactId, workspaceId },
-    process.env.NEXTAUTH_SECRET!,
+    process.env.UNSUBSCRIBE_SECRET!,
     { expiresIn: "365d" }
   )
 }

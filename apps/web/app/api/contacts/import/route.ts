@@ -9,8 +9,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({ where: { email: session.user.email } })
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
+    const workspaceId = (session.user as any).workspaceId as string
+    const userId = session.user.id as string
+    const userEmail = session.user.email
 
     const { contacts, fileName } = await request.json()
 
@@ -18,19 +19,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ added: 0, skipped: 0 })
     }
 
-    const existingContacts = await prisma.contact.findMany({
-      where: { workspaceId: user.workspaceId },
-      select: { email: true },
-    })
-    const existingEmails = new Set(existingContacts.map(c => c.email.toLowerCase()))
-
     const toInsert = contacts
       .filter((c: any) => {
         const email = (c.email || "").toLowerCase().trim()
-        return email && email.includes("@") && !existingEmails.has(email)
+        return email && email.includes("@")
       })
       .map((c: any) => ({
-        workspaceId: user.workspaceId,
+        workspaceId,
         email: c.email.toLowerCase().trim(),
         firstName: c.firstName || null,
         lastName: c.lastName || null,
@@ -44,21 +39,22 @@ export async function POST(request: Request) {
         source: "csv_import",
       }))
 
-    const skipped = contacts.length - toInsert.length
-
+    let added = 0
     if (toInsert.length > 0) {
-      await prisma.contact.createMany({ data: toInsert, skipDuplicates: true })
+      const result = await prisma.contact.createMany({ data: toInsert, skipDuplicates: true })
+      added = result.count
     }
 
+    const skipped = contacts.length - added
     const safeFileName = fileName || "Unknown file"
 
     await prisma.importLog.create({
       data: {
-        workspaceId: user.workspaceId,
-        userId: user.id,
-        userEmail: user.email,
+        workspaceId,
+        userId,
+        userEmail,
         fileName: safeFileName,
-        added: toInsert.length,
+        added,
         skipped,
         totalRows: contacts.length,
       },
@@ -66,20 +62,15 @@ export async function POST(request: Request) {
 
     await prisma.activityLog.create({
       data: {
-        workspaceId: user.workspaceId,
-        userId: user.id,
-        userEmail: user.email,
+        workspaceId,
+        userId,
+        userEmail,
         action: "contacts_imported",
-        details: {
-          fileName: safeFileName,
-          added: toInsert.length,
-          skipped,
-          totalRows: contacts.length,
-        },
+        details: { fileName: safeFileName, added, skipped, totalRows: contacts.length },
       },
     })
 
-    return NextResponse.json({ added: toInsert.length, skipped })
+    return NextResponse.json({ added, skipped })
   } catch (error) {
     console.error("Import error:", error)
     return NextResponse.json({ error: "Import failed" }, { status: 500 })

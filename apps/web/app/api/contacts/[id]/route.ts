@@ -12,13 +12,11 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({ where: { email: session.user.email } })
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
-
+    const workspaceId = (session.user as any).workspaceId as string
     const { id } = await params
 
     const contact = await prisma.contact.findFirst({
-      where: { id, workspaceId: user.workspaceId, deletedAt: null }
+      where: { id, workspaceId, deletedAt: null }
     })
 
     if (!contact) return NextResponse.json({ error: "Contact not found" }, { status: 404 })
@@ -39,14 +37,15 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({ where: { email: session.user.email } })
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
+    const workspaceId = (session.user as any).workspaceId as string
+    const userId = session.user.id as string
+    const userEmail = session.user.email
 
     const { id } = await params
     const body = await request.json()
 
     const contact = await prisma.contact.update({
-      where: { id, workspaceId: user.workspaceId },
+      where: { id, workspaceId },
       data: {
         firstName: body.firstName || null,
         lastName:  body.lastName  || null,
@@ -59,10 +58,10 @@ export async function PATCH(
 
     await prisma.activityLog.create({
       data: {
-        workspaceId: user.workspaceId,
+        workspaceId,
         contactId: id,
-        userId: user.id,
-        userEmail: user.email,
+        userId,
+        userEmail,
         action: "contact_edited",
         details: { changes: body },
       },
@@ -84,22 +83,23 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({ where: { email: session.user.email } })
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
+    const workspaceId = (session.user as any).workspaceId as string
+    const userId = session.user.id as string
+    const userEmail = session.user.email
 
     const { id } = await params
 
     await prisma.contact.update({
-      where: { id, workspaceId: user.workspaceId },
-      data: { deletedAt: new Date(), deletedBy: user.email }
+      where: { id, workspaceId },
+      data: { deletedAt: new Date(), deletedBy: userEmail }
     })
 
     await prisma.activityLog.create({
       data: {
-        workspaceId: user.workspaceId,
+        workspaceId,
         contactId: id,
-        userId: user.id,
-        userEmail: user.email,
+        userId,
+        userEmail,
         action: "contact_deleted",
         details: { method: "individual" }
       }

@@ -9,19 +9,12 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
-    }
-
+    const workspaceId = (session.user as any).workspaceId as string
     const { searchParams } = new URL(request.url)
     const filter = searchParams.get("filter") || "all"
     const segment = searchParams.get("segment") || "all"
 
-    const where: any = { workspaceId: user.workspaceId, deletedAt: null }
+    const where: any = { workspaceId, deletedAt: null }
 
     if (filter === "subscribed") where.subscriptionStatus = "subscribed"
     if (filter === "verified") where.verificationStatus = "verified"

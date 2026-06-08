@@ -110,18 +110,48 @@ export default function ImportPage() {
   }
 
   function smartDetect(cols: string[]): ColumnMapping {
-    const find = (kw: string[]) =>
-      cols.find(c => kw.some(k => c.toLowerCase().replace(/[\s_-]/g, "").includes(k))) || ""
+    const normalize = (s: string) => s.toLowerCase().replace(/[\s_\-\.]/g, "")
+
+    const exactMatch = (keywords: string[]) =>
+      cols.find(c => keywords.includes(normalize(c))) || ""
+
+    const partialMatch = (keywords: string[]) =>
+      cols.find(c => keywords.some(k => normalize(c).includes(k))) || ""
+
+    // Detect full name FIRST before first/last name
+    const fullName = exactMatch([
+      "fullname", "contactname", "name",
+      "clientname", "customername", "leadname"
+    ]) || partialMatch(["fullname", "contactname"])
+
+    // Only detect first/last if fullName is not found
+    const firstName = fullName ? "" : (
+      exactMatch(["firstname", "fname", "first"]) ||
+      partialMatch(["firstname", "fname"])
+    )
+
+    const lastName = fullName ? "" : (
+      exactMatch(["lastname", "lname", "surname", "last"]) ||
+      partialMatch(["lastname", "lname", "surname"])
+    )
+
     return {
-      email: find(["email", "emailaddress", "mail"]),
-      firstName: find(["firstname", "fname", "first"]),
-      lastName: find(["lastname", "lname", "last", "surname"]),
-      fullName: find(["fullname", "contactname", "name"]),
-      company: find(["company", "organisation", "organization", "org"]),
-      phone: find(["phone", "mobile", "tel"]),
-      jobTitle: find(["jobtitle", "title", "position", "role"]),
+      email: exactMatch(["email", "emailaddress", "mail", "workemail", "emailid"]) ||
+             partialMatch(["email", "mail"]),
+      fullName,
+      firstName,
+      lastName,
+      company: exactMatch(["company", "organisation", "organization", "org", "companyname", "employer"]) ||
+               partialMatch(["company", "organisation", "organization", "companyname"]),
+      phone: exactMatch(["phone", "mobile", "tel", "phonenumber", "mobilenumber", "contactnumber"]) ||
+             partialMatch(["phone", "mobile", "mobilenumber", "phonenumber"]),
+      jobTitle: exactMatch(["jobtitle", "title", "position", "role", "designation", "occupation"]) ||
+                partialMatch(["jobtitle", "designation", "position"]),
     }
   }
+
+  // Derive name mode directly from mapping — no separate state needed
+  const nameMode = mapping.fullName ? "full" : "split"
 
   function splitFullName(fullName: string) {
     const parts = (fullName || "").trim().split(" ")
@@ -156,13 +186,17 @@ export default function ImportPage() {
       setHeaders(cols); setPreview(rows.slice(0, 5)); setAllRows(rows)
       setMapping(smartDetect(cols)); setStep(1)
     } else if (ext === "xlsx" || ext === "xls") {
-      const XLSX = await import("xlsx")
+      const ExcelJS = (await import("exceljs")).default
       const buffer = await f.arrayBuffer()
-      const workbook = XLSX.read(buffer, { type: "array" })
-      const sheetName = workbook.SheetNames[0] ?? ""
-      const sheet = workbook.Sheets[sheetName]
+      const workbook = new ExcelJS.Workbook()
+      await workbook.xlsx.load(buffer)
+      const sheet = workbook.worksheets[0]
       if (!sheet) return
-      const data = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as string[][]
+      const data: string[][] = []
+      sheet.eachRow(row => {
+        const values = (row.values as any[]).slice(1).map(v => String(v ?? ""))
+        data.push(values)
+      })
       if (!data.length) return
       const cols = (data[0] ?? []).map(c => String(c || ""))
       const rows = data.slice(1).map(row => {
@@ -322,14 +356,24 @@ export default function ImportPage() {
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "20px" }}>
               {[
-                { key: "email", label: "Email address *" },
-                { key: "fullName", label: "Full name (auto-split)" },
+                { key: "email",     label: "Email address *" },
+                { key: "fullName",  label: "Full name (auto-split into first + last)" },
                 { key: "firstName", label: "First name" },
-                { key: "lastName", label: "Last name" },
-                { key: "company", label: "Company" },
-                { key: "phone", label: "Phone" },
-                { key: "jobTitle", label: "Job title" },
-              ].map(field => (
+                { key: "lastName",  label: "Last name" },
+                { key: "company",   label: "Company" },
+                { key: "phone",     label: "Phone" },
+                { key: "jobTitle",  label: "Job title" },
+              ]
+              .filter(field =>
+                field.key === "email" ||
+                field.key === "company" ||
+                field.key === "phone" ||
+                field.key === "jobTitle" ||
+                (field.key === "fullName"  && nameMode === "full") ||
+                (field.key === "firstName" && nameMode === "split") ||
+                (field.key === "lastName"  && nameMode === "split")
+              )
+              .map(field => (
                 <div key={field.key} style={{
                   background: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.9)",
                   borderRadius: "12px", padding: "12px", backdropFilter: "blur(8px)"
@@ -343,6 +387,14 @@ export default function ImportPage() {
                     <option value="">— Not mapped —</option>
                     {headers.map(h => <option key={h} value={h}>{h}</option>)}
                   </select>
+                  {field.key === "fullName" && (mapping as any)[field.key] && (
+                    <div style={{
+                      fontSize: "11px", color: "#0F6E56",
+                      marginTop: "5px", display: "flex", alignItems: "center", gap: "4px"
+                    }}>
+                      ✓ Will be automatically split into first name + last name
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -352,38 +404,57 @@ export default function ImportPage() {
               borderRadius: "14px", overflow: "hidden", marginBottom: "16px"
             }}>
               <div style={{
-                padding: "9px 14px",
-                background: "rgba(232,86,26,0.05)",
+                padding: "10px 14px", background: "rgba(232,86,26,0.05)",
                 borderBottom: "1px solid rgba(232,86,26,0.07)",
-                fontSize: "10px", fontWeight: 700, color: "#6B5040",
-                textTransform: "uppercase", letterSpacing: "0.8px"
-              }}>Preview — first 5 rows</div>
+                fontSize: "11px", fontWeight: 600, color: "#6B5040",
+                textTransform: "uppercase", letterSpacing: "0.8px",
+                display: "flex", alignItems: "center", justifyContent: "space-between"
+              }}>
+                <span>Preview — how contacts will be saved</span>
+                <span style={{ color: "#B8A898", fontWeight: 400 }}>First 5 rows</span>
+              </div>
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
                   <thead>
-                    <tr>
-                      {headers.map(h => (
+                    <tr style={{ background: "rgba(253,250,245,0.8)" }}>
+                      {["First name", "Last name", "Email", "Company", "Phone", "Job title"].map(h => (
                         <th key={h} style={{
                           padding: "8px 12px", textAlign: "left",
-                          color: "#B8A898", fontWeight: 500,
-                          borderBottom: "1px solid rgba(232,86,26,0.05)", whiteSpace: "nowrap"
+                          color: "#0F6E56", fontWeight: 600,
+                          borderBottom: "1px solid rgba(232,86,26,0.06)",
+                          whiteSpace: "nowrap", fontSize: "11px",
+                          textTransform: "uppercase", letterSpacing: "0.5px"
                         }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {preview.map((row, i) => (
-                      <tr key={i}>
-                        {headers.map(h => (
-                          <td key={h} style={{
-                            padding: "8px 12px", color: "#130E08",
-                            whiteSpace: "nowrap", maxWidth: "160px",
-                            overflow: "hidden", textOverflow: "ellipsis",
-                            borderBottom: "1px solid rgba(232,86,26,0.04)"
-                          }}>{row[h] || "—"}</td>
-                        ))}
-                      </tr>
-                    ))}
+                    {preview.map((row, i) => {
+                      let firstName = row[mapping.firstName] || ""
+                      let lastName  = row[mapping.lastName]  || ""
+                      if (!firstName && !lastName && mapping.fullName && row[mapping.fullName]) {
+                        const parts = (row[mapping.fullName] || "").trim().split(" ")
+                        firstName = parts[0] || ""
+                        lastName  = parts.slice(1).join(" ") || ""
+                      }
+                      const email    = row[mapping.email]    || ""
+                      const company  = row[mapping.company]  || ""
+                      const phone    = row[mapping.phone]    || ""
+                      const jobTitle = row[mapping.jobTitle] || ""
+                      return (
+                        <tr key={i} style={{ borderBottom: "1px solid rgba(232,86,26,0.04)" }}>
+                          {[firstName, lastName, email, company, phone, jobTitle].map((val, ci) => (
+                            <td key={ci} style={{
+                              padding: "9px 12px",
+                              color: val ? "#130E08" : "#D8C8B8",
+                              whiteSpace: "nowrap", maxWidth: "160px",
+                              overflow: "hidden", textOverflow: "ellipsis",
+                              fontSize: "12.5px"
+                            }}>{val || "—"}</td>
+                          ))}
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>

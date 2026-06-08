@@ -53,6 +53,15 @@ export default function ContactsPage() {
   const tipTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [deleteModal, setDeleteModal] = useState<string[] | null>(null)
   const [deletingIds, setDeletingIds] = useState<string[]>([])
+  const [verifyProgress, setVerifyProgress] = useState<{
+    completed: number
+    total: number
+    verified: number
+    invalid: number
+    risky: number
+    unknown: number
+    status: string
+  } | null>(null)
 
   useEffect(() => { fetchContacts(); fetchAllTags() }, [filter, segment])
 
@@ -117,14 +126,44 @@ export default function ContactsPage() {
   }
 
   async function bulkVerify() {
+    if (selected.length === 0) return
     setBulkLoading(true)
-    await fetch("/api/contacts/bulk", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: selected, action: "verify" })
-    })
-    await fetchContacts()
-    setBulkLoading(false)
+    setVerifyProgress(null)
+    try {
+      const res = await fetch("/api/verify/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contactIds: selected }),
+      })
+      const { jobId } = await res.json()
+
+      const poll = setInterval(async () => {
+        try {
+          const statusRes = await fetch(`/api/verify/bulk/status?jobId=${jobId}`)
+          const job = await statusRes.json()
+          setVerifyProgress({
+            completed: job.completed,
+            total: job.total,
+            verified: job.verified,
+            invalid: job.invalid,
+            risky: job.risky,
+            unknown: job.unknown,
+            status: job.status,
+          })
+          if (job.status === "completed" || job.status === "failed") {
+            clearInterval(poll)
+            setBulkLoading(false)
+            fetchContacts()
+          }
+        } catch {
+          clearInterval(poll)
+          setBulkLoading(false)
+        }
+      }, 2000)
+    } catch (err) {
+      console.error("Bulk verify failed:", err)
+      setBulkLoading(false)
+    }
   }
 
   async function bulkAddTag(tagId: string) {
@@ -508,6 +547,45 @@ export default function ContactsPage() {
             </div>
           )
         })()}
+
+        {/* ── Verify progress bar ── */}
+        {verifyProgress && (
+          <div style={{
+            background: "rgba(255,255,255,0.72)", backdropFilter: "blur(18px)",
+            border: "1px solid rgba(255,255,255,0.9)",
+            borderRadius: "14px", padding: "14px 18px", marginBottom: "12px",
+            boxShadow: "0 2px 12px rgba(232,86,26,0.06)",
+          }}>
+            <div style={{
+              display: "flex", justifyContent: "space-between", alignItems: "center",
+              fontSize: "12px", fontWeight: 600, color: "#130E08", marginBottom: "8px",
+            }}>
+              <span>
+                {verifyProgress.status === "completed" ? "Verification complete" : "Verifying contacts..."}
+              </span>
+              <span style={{ color: "#B8A898", fontWeight: 500 }}>
+                {verifyProgress.completed} / {verifyProgress.total}
+              </span>
+            </div>
+            <div style={{
+              height: "5px", background: "rgba(184,168,152,0.18)",
+              borderRadius: "100px", overflow: "hidden", marginBottom: "10px",
+            }}>
+              <div style={{
+                height: "100%",
+                width: `${verifyProgress.total > 0 ? Math.round((verifyProgress.completed / verifyProgress.total) * 100) : 0}%`,
+                background: "linear-gradient(90deg, #E8561A, #FF7A3D)",
+                borderRadius: "100px", transition: "width 0.4s ease",
+              }} />
+            </div>
+            <div style={{ display: "flex", gap: "16px", fontSize: "11px" }}>
+              <span style={{ color: "#0F6E56" }}>✓ {verifyProgress.verified} valid</span>
+              <span style={{ color: "#993C1D" }}>✗ {verifyProgress.invalid} invalid</span>
+              <span style={{ color: "#854F0B" }}>⚠ {verifyProgress.risky} risky</span>
+              <span style={{ color: "#B8A898" }}>? {verifyProgress.unknown} unknown</span>
+            </div>
+          </div>
+        )}
 
         {/* ── Table ── */}
         <div style={{ ...glass, overflow: "hidden" }}>
