@@ -3,48 +3,64 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 
+const pageBg: React.CSSProperties = {
+  minHeight: "100vh",
+  background: `
+    radial-gradient(ellipse at 12% 12%, rgba(255,175,110,0.28) 0%, transparent 48%),
+    radial-gradient(ellipse at 88% 80%, rgba(232,86,26,0.09) 0%, transparent 45%),
+    radial-gradient(ellipse at 72% 8%,  rgba(255,215,175,0.20) 0%, transparent 42%),
+    radial-gradient(ellipse at 30% 85%, rgba(255,200,150,0.12) 0%, transparent 38%),
+    #FDF5EE
+  `,
+}
+
+const glass: React.CSSProperties = {
+  background: "rgba(255,255,255,0.62)",
+  backdropFilter: "blur(28px)",
+  WebkitBackdropFilter: "blur(28px)",
+  border: "1px solid rgba(255,255,255,0.90)",
+  borderRadius: "18px",
+  boxShadow: "0 4px 24px rgba(232,86,26,0.06), 0 1px 6px rgba(0,0,0,0.03)",
+}
+
 function getStatusStyle(status: string) {
   switch (status) {
-    case "valid":   return { bg: "#E1F5EE", color: "#0F6E56", icon: "✓" }
-    case "invalid": return { bg: "#FAECE7", color: "#993C1D", icon: "✗" }
-    case "risky":   return { bg: "#FFF0E8", color: "#854F0B", icon: "⚠" }
-    default:        return { bg: "#F5EEE6", color: "#B8A898", icon: "?" }
+    case "valid":   return { bg: "rgba(15,110,86,0.08)",  border: "rgba(15,110,86,0.18)",  color: "#0F6E56", icon: "✓", label: "Valid" }
+    case "invalid": return { bg: "rgba(153,60,29,0.08)",  border: "rgba(153,60,29,0.18)",  color: "#993C1D", icon: "✗", label: "Invalid" }
+    case "risky":   return { bg: "rgba(133,79,11,0.08)",  border: "rgba(133,79,11,0.18)",  color: "#854F0B", icon: "⚠", label: "Risky" }
+    default:        return { bg: "rgba(184,168,152,0.10)", border: "rgba(184,168,152,0.20)", color: "#8A7A6A", icon: "?", label: "Unknown" }
   }
 }
 
 interface VerifResult {
-  status: string
-  score: number
-  duration: number
-  detail: string
-  reason: string
+  status: string; score: number; duration: number; detail: string; reason: string
   checks: {
-    syntax: boolean
-    gibberish: boolean
-    disposable: boolean
-    webmail: boolean
-    hasMX: boolean
-    serverType: string
-    smtpConnects: boolean
-    smtpAccepts: boolean | null
-    catchAll: boolean
-    catchAllResolved: boolean
-    catchAllConfidence: number
+    syntax: boolean; gibberish: boolean; disposable: boolean; webmail: boolean
+    hasMX: boolean; serverType: string; smtpConnects: boolean
+    smtpAccepts: boolean | null; catchAll: boolean
+    catchAllResolved: boolean; catchAllConfidence: number
   }
 }
 
 interface Stats {
   contacts: { total: number; verified: number; invalid: number; risky: number; unknown: number; unverified: number }
-  verificationRate: number
-  avgScore: number
-  recentLogs: any[]
+  verificationRate: number; avgScore: number; recentLogs: any[]
 }
 
+const LAYERS = [
+  { num: 1, name: "Instant checks",      sub: "Syntax · Gibberish · Disposable · Webmail",  status: "active",   day: "Day 1" },
+  { num: 2, name: "DNS checks",           sub: "MX record · Server type · Fingerprinting",   status: "active",   day: "Day 1" },
+  { num: 3, name: "SMTP verification",    sub: "Connection · Tickling · Response time",       status: "active",   day: "Day 2" },
+  { num: 4, name: "Catch-all resolution", sub: "Timing attack · Pattern match · Confidence", status: "active",   day: "Day 3" },
+  { num: 5, name: "AI scoring",           sub: "Confidence model · Spam trap · Domain rep",  status: "planned",  day: "Week 6" },
+  { num: 6, name: "Engagement data",      sub: "Bounce feedback · Opens · Clicks",           status: "planned",  day: "Week 7" },
+]
+
 export default function VerificationPage() {
-  const [stats, setStats]         = useState<Stats | null>(null)
-  const [loading, setLoading]     = useState(true)
-  const [testEmail, setTestEmail] = useState("")
-  const [testing, setTesting]     = useState(false)
+  const [stats, setStats]           = useState<Stats | null>(null)
+  const [loading, setLoading]       = useState(true)
+  const [testEmail, setTestEmail]   = useState("")
+  const [testing, setTesting]       = useState(false)
   const [testResult, setTestResult] = useState<VerifResult | null>(null)
 
   useEffect(() => { fetchStats() }, [])
@@ -61,8 +77,7 @@ export default function VerificationPage() {
 
   async function handleTest() {
     if (!testEmail.trim()) return
-    setTesting(true)
-    setTestResult(null)
+    setTesting(true); setTestResult(null)
     try {
       const res = await fetch("/api/verify", {
         method: "POST",
@@ -71,7 +86,6 @@ export default function VerificationPage() {
       })
       const data = await res.json()
       setTestResult(data.result)
-      // Refresh stats after each test
       fetchStats()
     } finally {
       setTesting(false)
@@ -79,80 +93,108 @@ export default function VerificationPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#FDFAF5" }}>
+    <div style={pageBg}>
       <style>{`
-        @keyframes spin { to { transform: rotate(360deg) } }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: translateY(0) } }
-        .test-input:focus { outline: none; border-color: #E8561A !important; box-shadow: 0 0 0 3px rgba(232,86,26,0.1); }
+        @keyframes spin    { to { transform: rotate(360deg) } }
+        @keyframes fadeUp  { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes pulse   { 0%,100% { opacity:1 } 50% { opacity:0.4 } }
+        .verif-input:focus { outline:none; border-color:rgba(232,86,26,0.5) !important; box-shadow:0 0 0 3px rgba(232,86,26,0.10); }
+        .stat-card:hover   { transform:translateY(-2px); box-shadow:0 8px 28px rgba(232,86,26,0.10), 0 2px 8px rgba(0,0,0,0.04) !important; }
+        .log-row:hover     { background:rgba(253,245,238,0.7) !important; }
       `}</style>
 
-      {/* Sub-header */}
+      {/* Action bar — no repeated title, Topbar already has page identity */}
       <div style={{
-        background: "#FDFAF5", borderBottom: "1px solid #EAE0D5",
-        padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between",
+        background: "rgba(253,245,238,0.88)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+        borderBottom: "1px solid rgba(234,224,213,0.7)",
+        padding: "10px 24px", display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
-        <div>
-          <div style={{ fontSize: "15px", fontWeight: 700, color: "#130E08" }}>Verification engine</div>
-          <div style={{ fontSize: "11px", color: "#B8A898", marginTop: "2px" }}>
-            6-layer email verification — built in-house
-          </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <span style={{
+            fontSize: "10px", fontWeight: 700, padding: "3px 9px", borderRadius: "20px",
+            background: "rgba(15,110,86,0.10)", color: "#0F6E56", letterSpacing: "0.5px",
+            display: "flex", alignItems: "center", gap: "5px",
+          }}>
+            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#0F6E56", display: "inline-block", animation: "pulse 2s ease-in-out infinite" }} />
+            4 / 6 layers active
+          </span>
+          <span style={{ fontSize: "11px", color: "#C8B8A8" }}>·</span>
+          <span style={{ fontSize: "11px", color: "#B8A898" }}>Built in-house · 7 checks per email</span>
         </div>
         <Link href="/contacts">
           <button style={{
             padding: "7px 16px", borderRadius: "100px", border: "none",
-            background: "#E8561A", fontSize: "12px", fontWeight: 600,
-            color: "#fff", cursor: "pointer",
+            background: "linear-gradient(135deg, #E8561A, #FF7A3D)",
+            color: "#fff", fontSize: "12px", fontWeight: 600,
+            cursor: "pointer", fontFamily: "inherit",
+            boxShadow: "0 4px 14px rgba(232,86,26,0.28)",
+            transition: "all 0.15s",
           }}>Verify all contacts →</button>
         </Link>
       </div>
 
       <div style={{ padding: "20px 24px" }}>
         {loading ? (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "80px" }}>
             <div style={{
-              width: "24px", height: "24px", borderRadius: "50%",
+              width: "28px", height: "28px", borderRadius: "50%",
               border: "2px solid rgba(232,86,26,0.15)", borderTopColor: "#E8561A",
               animation: "spin 0.7s linear infinite",
             }} />
           </div>
         ) : stats && (
           <>
-            {/* Stats row */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(6,1fr)", gap: "8px", marginBottom: "20px" }}>
+            {/* ── Stat Cards ── */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(6,1fr)", gap: "10px", marginBottom: "18px" }}>
               {[
-                { label: "Total",      value: stats.contacts.total,      color: "#130E08" },
-                { label: "✓ Valid",    value: stats.contacts.verified,   color: "#0F6E56" },
-                { label: "✗ Invalid",  value: stats.contacts.invalid,    color: "#993C1D" },
-                { label: "⚠ Risky",   value: stats.contacts.risky,      color: "#854F0B" },
-                { label: "? Unknown",  value: stats.contacts.unknown,    color: "#B8A898" },
-                { label: "⬜ Not yet", value: stats.contacts.unverified, color: "#B8A898" },
+                { label: "Total",     value: stats.contacts.total,      color: "#130E08", bg: "rgba(19,14,8,0.05)",     bar: "#C8B8A8" },
+                { label: "Valid",     value: stats.contacts.verified,   color: "#0F6E56", bg: "rgba(15,110,86,0.07)",   bar: "#0F6E56" },
+                { label: "Invalid",   value: stats.contacts.invalid,    color: "#993C1D", bg: "rgba(153,60,29,0.07)",   bar: "#993C1D" },
+                { label: "Risky",     value: stats.contacts.risky,      color: "#854F0B", bg: "rgba(133,79,11,0.07)",   bar: "#C8820A" },
+                { label: "Unknown",   value: stats.contacts.unknown,    color: "#8A7A6A", bg: "rgba(138,122,106,0.06)", bar: "#B8A898" },
+                { label: "Not yet",   value: stats.contacts.unverified, color: "#B8A898", bg: "rgba(184,168,152,0.05)", bar: "#D8C8B8" },
               ].map((s, i) => (
-                <div key={i} style={{ background: "#fff", border: "1px solid #EAE0D5", borderRadius: "12px", padding: "12px 14px", textAlign: "center" }}>
-                  <div style={{ fontSize: "22px", fontWeight: 700, color: s.color, letterSpacing: "-0.5px" }}>{s.value.toLocaleString()}</div>
-                  <div style={{ fontSize: "10px", color: "#B8A898", marginTop: "2px", textTransform: "uppercase", letterSpacing: "0.5px" }}>{s.label}</div>
+                <div key={i} className="stat-card" style={{
+                  ...glass, padding: "14px 16px", textAlign: "center",
+                  transition: "all 0.2s", cursor: "default", position: "relative", overflow: "hidden",
+                }}>
+                  <div style={{
+                    position: "absolute", top: 0, left: 0, right: 0, height: "3px",
+                    background: s.bar, borderRadius: "18px 18px 0 0", opacity: 0.7,
+                  }} />
+                  <div style={{ fontSize: "24px", fontWeight: 800, color: s.color, letterSpacing: "-1px", lineHeight: 1.1, marginTop: "2px" }}>
+                    {s.value.toLocaleString()}
+                  </div>
+                  <div style={{ fontSize: "10px", color: "#B8A898", marginTop: "5px", textTransform: "uppercase", letterSpacing: "0.8px", fontWeight: 600 }}>
+                    {s.label}
+                  </div>
                 </div>
               ))}
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "20px" }}>
+            {/* ── Two-column: Test + Recent ── */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
 
               {/* Test panel */}
-              <div style={{ background: "#fff", border: "1px solid #EAE0D5", borderRadius: "16px", padding: "20px" }}>
-                <div style={{ fontSize: "13px", fontWeight: 600, color: "#130E08", marginBottom: "14px" }}>Test a single email</div>
+              <div style={{ ...glass, padding: "22px" }}>
+                <div style={{ marginBottom: "16px" }}>
+                  <div style={{ fontSize: "13px", fontWeight: 700, color: "#130E08", marginBottom: "2px" }}>Test a single email</div>
+                  <div style={{ fontSize: "11px", color: "#B8A898" }}>Run all 7 checks instantly and see a detailed breakdown</div>
+                </div>
 
                 <div style={{ display: "flex", gap: "8px", marginBottom: "14px" }}>
                   <input
-                    className="test-input"
+                    className="verif-input"
                     type="email"
                     value={testEmail}
                     onChange={e => setTestEmail(e.target.value)}
                     onKeyDown={e => e.key === "Enter" && handleTest()}
                     placeholder="test@company.com"
                     style={{
-                      flex: 1, padding: "9px 12px",
-                      border: "1px solid #EAE0D5", borderRadius: "9px",
-                      fontSize: "13px", fontFamily: "inherit",
-                      color: "#130E08", background: "#FDFAF5",
+                      flex: 1, padding: "10px 13px",
+                      border: "1.5px solid rgba(234,224,213,0.9)",
+                      borderRadius: "10px", fontSize: "13px", fontFamily: "inherit",
+                      color: "#130E08", background: "rgba(255,255,255,0.7)",
                       transition: "all 0.15s",
                     }}
                   />
@@ -160,130 +202,248 @@ export default function VerificationPage() {
                     onClick={handleTest}
                     disabled={!testEmail.trim() || testing}
                     style={{
-                      padding: "9px 16px", borderRadius: "9px", border: "none",
-                      background: testEmail.trim() ? "#E8561A" : "#EAE0D5",
+                      padding: "10px 18px", borderRadius: "10px", border: "none",
+                      background: testEmail.trim() && !testing
+                        ? "linear-gradient(135deg, #E8561A, #FF7A3D)"
+                        : "rgba(234,224,213,0.7)",
                       fontSize: "12px", fontWeight: 600,
-                      color: testEmail.trim() ? "#fff" : "#B8A898",
+                      color: testEmail.trim() && !testing ? "#fff" : "#B8A898",
                       cursor: testEmail.trim() && !testing ? "pointer" : "not-allowed",
-                      fontFamily: "inherit", flexShrink: 0, transition: "all 0.15s",
+                      fontFamily: "inherit", flexShrink: 0,
+                      transition: "all 0.15s",
+                      boxShadow: testEmail.trim() && !testing ? "0 4px 12px rgba(232,86,26,0.28)" : "none",
+                      minWidth: "70px", display: "flex", alignItems: "center", justifyContent: "center",
                     }}
                   >
                     {testing ? (
                       <div style={{ width: "14px", height: "14px", borderRadius: "50%", border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", animation: "spin 0.7s linear infinite" }} />
-                    ) : "Verify"}
+                    ) : "Verify →"}
                   </button>
                 </div>
 
                 {testResult ? (() => {
                   const s = getStatusStyle(testResult.status)
+                  const checks = [
+                    { label: "Syntax valid",          pass: testResult.checks.syntax },
+                    { label: "Not gibberish",         pass: !testResult.checks.gibberish },
+                    { label: "Not disposable",        pass: !testResult.checks.disposable },
+                    { label: "Has MX record",         pass: testResult.checks.hasMX },
+                    { label: "SMTP connects",         pass: testResult.checks.smtpConnects },
+                    { label: "SMTP accepts mailbox",  pass: testResult.checks.smtpAccepts === true },
+                    { label: "Not catch-all",         pass: !testResult.checks.catchAll },
+                  ]
                   return (
-                    <div style={{ background: s.bg, borderRadius: "10px", padding: "14px", animation: "fadeUp 0.2s ease" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
-                        <span style={{ fontSize: "20px", fontWeight: 700, color: s.color }}>{s.icon}</span>
-                        <div>
-                          <div style={{ fontSize: "14px", fontWeight: 700, color: s.color, textTransform: "capitalize" }}>{testResult.status}</div>
-                          <div style={{ fontSize: "11px", color: s.color, opacity: 0.75 }}>Score: {testResult.score}/100 · {testResult.duration}ms</div>
+                    <div style={{ background: s.bg, border: `1px solid ${s.border}`, borderRadius: "12px", padding: "16px", animation: "fadeUp 0.2s ease" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <div style={{
+                            width: "32px", height: "32px", borderRadius: "50%",
+                            background: `${s.border}`, display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: "15px", fontWeight: 700, color: s.color,
+                          }}>{s.icon}</div>
+                          <div>
+                            <div style={{ fontSize: "14px", fontWeight: 700, color: s.color, textTransform: "capitalize" }}>{testResult.status}</div>
+                            <div style={{ fontSize: "11px", color: s.color, opacity: 0.7 }}>
+                              {testResult.checks.serverType || "Unknown provider"}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{ fontSize: "20px", fontWeight: 800, color: s.color, lineHeight: 1 }}>{testResult.score}</div>
+                          <div style={{ fontSize: "10px", color: s.color, opacity: 0.6, letterSpacing: "0.3px" }}>/ 100 · {testResult.duration}ms</div>
                         </div>
                       </div>
-                      <div style={{ fontSize: "12px", color: s.color, marginBottom: "10px", lineHeight: 1.5 }}>{testResult.detail}</div>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px" }}>
-                        {[
-                          { label: "Syntax valid",         pass: testResult.checks.syntax },
-                          { label: "Not gibberish",        pass: !testResult.checks.gibberish },
-                          { label: "Not disposable",       pass: !testResult.checks.disposable },
-                          { label: "Has MX record",        pass: testResult.checks.hasMX },
-                          { label: "SMTP connects",        pass: testResult.checks.smtpConnects },
-                          { label: "SMTP accepts mailbox", pass: testResult.checks.smtpAccepts === true },
-                          { label: "Not catch-all",        pass: !testResult.checks.catchAll },
-                        ].map((c, i) => (
-                          <div key={i} style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "11px", color: s.color, opacity: 0.85 }}>
-                            <span style={{ fontWeight: 700 }}>{c.pass ? "✓" : "✗"}</span>
+
+                      <div style={{ fontSize: "12px", color: s.color, marginBottom: "12px", lineHeight: 1.55, opacity: 0.85 }}>
+                        {testResult.detail}
+                      </div>
+
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5px" }}>
+                        {checks.map((c, i) => (
+                          <div key={i} style={{
+                            display: "flex", alignItems: "center", gap: "6px",
+                            fontSize: "11.5px", color: s.color, opacity: c.pass ? 0.9 : 0.55,
+                          }}>
+                            <span style={{
+                              width: "16px", height: "16px", borderRadius: "50%", flexShrink: 0,
+                              background: c.pass ? "rgba(15,110,86,0.15)" : "rgba(153,60,29,0.12)",
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              fontSize: "9px", fontWeight: 700,
+                              color: c.pass ? "#0F6E56" : "#993C1D",
+                            }}>{c.pass ? "✓" : "✗"}</span>
                             {c.label}
                           </div>
                         ))}
                       </div>
-                      {testResult.checks.serverType && (
-                        <div style={{ marginTop: "8px", fontSize: "11px", color: s.color, opacity: 0.7 }}>
-                          Mail server: {testResult.checks.serverType}
-                        </div>
-                      )}
+
                       {testResult.checks.webmail && (
-                        <div style={{ fontSize: "11px", color: s.color, opacity: 0.7 }}>Type: Personal / Webmail</div>
+                        <div style={{ marginTop: "10px", fontSize: "11px", color: s.color, opacity: 0.65, display: "flex", alignItems: "center", gap: "4px" }}>
+                          <span>📧</span> Personal / Webmail address
+                        </div>
                       )}
                     </div>
                   )
                 })() : (
-                  <div style={{ background: "#F5EEE6", borderRadius: "10px", padding: "14px", fontSize: "12px", color: "#6B5040", lineHeight: 1.65 }}>
-                    <div style={{ fontWeight: 600, marginBottom: "6px" }}>What gets checked:</div>
-                    <div>✓ Email syntax and format</div>
-                    <div>✓ Gibberish and bot detection</div>
-                    <div>✓ 100,000+ disposable domains</div>
-                    <div>✓ Webmail provider detection</div>
-                    <div>✓ DNS MX record lookup</div>
-                    <div>✓ Mail server fingerprinting</div>
-                    <div style={{ color: "#B8A898", marginTop: "5px" }}>Coming: catch-all resolution (Day 3)</div>
+                  <div style={{
+                    background: "rgba(253,245,238,0.8)",
+                    border: "1px solid rgba(232,86,26,0.10)",
+                    borderRadius: "12px", padding: "16px",
+                  }}>
+                    <div style={{ fontSize: "11.5px", fontWeight: 700, color: "#6B5040", marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.6px" }}>
+                      What gets checked
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      {[
+                        { icon: "⚡", text: "Syntax & format validation" },
+                        { icon: "🤖", text: "Gibberish & bot detection" },
+                        { icon: "🚫", text: "100,000+ disposable domains" },
+                        { icon: "📬", text: "Webmail provider detection" },
+                        { icon: "🔍", text: "DNS MX record lookup" },
+                        { icon: "🖧",  text: "SMTP mailbox verification" },
+                        { icon: "🎯", text: "Catch-all server detection" },
+                      ].map((item, i) => (
+                        <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "#6B5040" }}>
+                          <span style={{ fontSize: "13px" }}>{item.icon}</span>
+                          {item.text}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
 
-              {/* Recent logs */}
-              <div style={{ background: "#fff", border: "1px solid #EAE0D5", borderRadius: "16px", padding: "20px" }}>
-                <div style={{ fontSize: "13px", fontWeight: 600, color: "#130E08", marginBottom: "14px" }}>Recent verifications</div>
-
-                {stats.recentLogs.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "28px", color: "#B8A898", fontSize: "13px" }}>
-                    No verifications yet — test an email above
+              {/* Recent verifications */}
+              <div style={{ ...glass, padding: "22px", display: "flex", flexDirection: "column" }}>
+                <div style={{ marginBottom: "16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div>
+                    <div style={{ fontSize: "13px", fontWeight: 700, color: "#130E08", marginBottom: "2px" }}>Recent verifications</div>
+                    <div style={{ fontSize: "11px", color: "#B8A898" }}>Last {stats.recentLogs.length} checks</div>
                   </div>
-                ) : (
-                  stats.recentLogs.map((log: any, i: number) => {
-                    const s = getStatusStyle(log.status)
-                    return (
-                      <div key={log.id} style={{
-                        display: "flex", alignItems: "center", gap: "10px",
-                        padding: "8px 0",
-                        borderBottom: i < stats.recentLogs.length - 1 ? "1px solid #F5EEE6" : "none",
-                      }}>
-                        <span style={{ fontSize: "14px", fontWeight: 700, color: s.color, width: "16px", textAlign: "center", flexShrink: 0 }}>{s.icon}</span>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: "12.5px", fontWeight: 500, color: "#130E08", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{log.email}</div>
-                          <div style={{ fontSize: "10.5px", color: "#B8A898" }}>
-                            Score: {log.score}/100 · {log.serverType || "Unknown server"} · {log.responseTime}ms
-                          </div>
-                        </div>
-                        <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "20px", background: s.bg, color: s.color, flexShrink: 0 }}>{log.status}</span>
+                  {stats.contacts.total > 0 && (
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: "18px", fontWeight: 800, color: "#E8561A", lineHeight: 1 }}>
+                        {Math.round(stats.verificationRate)}%
                       </div>
-                    )
-                  })
-                )}
+                      <div style={{ fontSize: "10px", color: "#B8A898", letterSpacing: "0.3px" }}>verified</div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Mini progress bar */}
+                {stats.contacts.total > 0 && (() => {
+                  const t = stats.contacts.total
+                  const segs = [
+                    { w: (stats.contacts.verified  / t) * 100, c: "#0F6E56" },
+                    { w: (stats.contacts.risky     / t) * 100, c: "#C8820A" },
+                    { w: (stats.contacts.invalid   / t) * 100, c: "#993C1D" },
+                    { w: (stats.contacts.unknown   / t) * 100, c: "#B8A898" },
+                  ]
+                  return (
+                    <div style={{ height: "5px", borderRadius: "10px", overflow: "hidden", background: "rgba(234,224,213,0.5)", marginBottom: "14px", display: "flex" }}>
+                      {segs.map((seg, i) => seg.w > 0 && (
+                        <div key={i} style={{ width: `${seg.w}%`, background: seg.c, transition: "width 0.5s" }} />
+                      ))}
+                    </div>
+                  )
+                })()}
+
+                <div style={{ flex: 1, overflowY: "auto" }}>
+                  {stats.recentLogs.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "40px 20px", color: "#B8A898" }}>
+                      <div style={{ fontSize: "28px", marginBottom: "8px" }}>📭</div>
+                      <div style={{ fontSize: "13px", fontWeight: 500 }}>No verifications yet</div>
+                      <div style={{ fontSize: "11px", marginTop: "4px" }}>Test an email on the left to get started</div>
+                    </div>
+                  ) : (
+                    stats.recentLogs.map((log: any, i: number) => {
+                      const s = getStatusStyle(log.status)
+                      return (
+                        <div key={log.id} className="log-row" style={{
+                          display: "flex", alignItems: "center", gap: "10px",
+                          padding: "9px 8px", borderRadius: "8px", cursor: "default",
+                          borderBottom: i < stats.recentLogs.length - 1 ? "1px solid rgba(234,224,213,0.5)" : "none",
+                          transition: "background 0.12s",
+                        }}>
+                          <div style={{
+                            width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0,
+                            background: s.bg, border: `1px solid ${s.border}`,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: "12px", fontWeight: 700, color: s.color,
+                          }}>{s.icon}</div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#130E08", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {log.email}
+                            </div>
+                            <div style={{ fontSize: "10.5px", color: "#B8A898", marginTop: "1px" }}>
+                              Score {log.score}/100 · {log.serverType || "—"} · {log.responseTime}ms
+                            </div>
+                          </div>
+                          <span style={{
+                            fontSize: "10px", fontWeight: 700, padding: "3px 9px",
+                            borderRadius: "20px", background: s.bg, color: s.color,
+                            border: `1px solid ${s.border}`, flexShrink: 0, letterSpacing: "0.3px",
+                          }}>{s.label}</span>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Engine layers */}
-            <div style={{ background: "#fff", border: "1px solid #EAE0D5", borderRadius: "16px", padding: "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-                <div style={{ fontSize: "13px", fontWeight: 600, color: "#130E08" }}>Verification engine status</div>
-                <span style={{ fontSize: "11px", fontWeight: 500, padding: "3px 10px", borderRadius: "20px", background: "#E1F5EE", color: "#0F6E56" }}>● Active</span>
+            {/* ── Engine status ── */}
+            <div style={{ ...glass, padding: "22px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "18px" }}>
+                <div>
+                  <div style={{ fontSize: "13px", fontWeight: 700, color: "#130E08", marginBottom: "2px" }}>Engine layers</div>
+                  <div style={{ fontSize: "11px", color: "#B8A898" }}>4 active · 2 on roadmap</div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  {LAYERS.map((l, i) => (
+                    <div key={i} style={{
+                      width: "28px", height: "5px", borderRadius: "10px",
+                      background: l.status === "active" ? "#0F6E56" : "rgba(184,168,152,0.25)",
+                      transition: "all 0.2s",
+                    }} />
+                  ))}
+                </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "10px" }}>
-                {[
-                  { layer: "Layer 1", name: "Instant checks",      checks: "Syntax · Gibberish · Disposable · Webmail",   status: "active",   day: "Day 1 ✅" },
-                  { layer: "Layer 2", name: "DNS checks",           checks: "MX record · Server type · Domain age",        status: "active",   day: "Day 1 ✅" },
-                  { layer: "Layer 3", name: "SMTP verification",    checks: "Connection · Tickling · Response time",        status: "active",   day: "Day 2 ✅" },
-                  { layer: "Layer 4", name: "Catch-all resolution", checks: "Timing attack · Pattern match · Retry",        status: "active",   day: "Day 3 ✅" },
-                  { layer: "Layer 5", name: "AI scoring",           checks: "Confidence model · Spam trap · Domain rep",   status: "planned",  day: "Week 6 📅" },
-                  { layer: "Layer 6", name: "Engagement data",      checks: "Bounce feedback · Opens · Clicks",            status: "planned",  day: "Week 5 📅" },
-                ].map((layer, i) => {
-                  const bg = layer.status === "active" ? "#E1F5EE" : layer.status === "building" ? "#FFF0E8" : "#F5EEE6"
-                  const color = layer.status === "active" ? "#0F6E56" : layer.status === "building" ? "#854F0B" : "#B8A898"
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(6,1fr)", gap: "10px" }}>
+                {LAYERS.map((layer, i) => {
+                  const active = layer.status === "active"
                   return (
-                    <div key={i} style={{ background: bg, borderRadius: "10px", padding: "12px 14px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                        <span style={{ fontSize: "10px", fontWeight: 700, color, textTransform: "uppercase", letterSpacing: "0.5px" }}>{layer.layer}</span>
-                        <span style={{ fontSize: "10px", color }}>{layer.day}</span>
+                    <div key={i} style={{
+                      borderRadius: "12px", padding: "14px",
+                      background: active ? "rgba(15,110,86,0.07)" : "rgba(234,224,213,0.35)",
+                      border: active ? "1px solid rgba(15,110,86,0.18)" : "1px solid rgba(234,224,213,0.6)",
+                      position: "relative", overflow: "hidden",
+                      transition: "all 0.2s",
+                    }}>
+                      {active && (
+                        <div style={{
+                          position: "absolute", top: 0, left: 0, right: 0, height: "2px",
+                          background: "linear-gradient(90deg, #0F6E56, #1AA07A)",
+                        }} />
+                      )}
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                        <span style={{
+                          fontSize: "9.5px", fontWeight: 700,
+                          color: active ? "#0F6E56" : "#B8A898",
+                          textTransform: "uppercase", letterSpacing: "0.7px",
+                        }}>Layer {layer.num}</span>
+                        <span style={{
+                          fontSize: "9px", fontWeight: 600, padding: "2px 6px", borderRadius: "10px",
+                          background: active ? "rgba(15,110,86,0.12)" : "rgba(184,168,152,0.18)",
+                          color: active ? "#0F6E56" : "#B8A898",
+                        }}>{layer.day}</span>
                       </div>
-                      <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#130E08", marginBottom: "3px" }}>{layer.name}</div>
-                      <div style={{ fontSize: "11px", color: "#6B5040" }}>{layer.checks}</div>
+                      <div style={{ fontSize: "12px", fontWeight: 700, color: active ? "#130E08" : "#B8A898", marginBottom: "5px", lineHeight: 1.25 }}>
+                        {layer.name}
+                      </div>
+                      <div style={{ fontSize: "10.5px", color: active ? "#6B5040" : "#C8B8A8", lineHeight: 1.45 }}>
+                        {layer.sub}
+                      </div>
                     </div>
                   )
                 })}
